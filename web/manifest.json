@@ -1,0 +1,9 @@
+{
+  "name": "enxOS",
+  "short_name": "enxOS",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#08111D",
+  "theme_color": "#08111D",
+  "description": "Ecossistema modular enxOS."
+}

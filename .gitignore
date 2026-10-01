@@ -47,3 +47,21 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+/build/
+coverage/
+
+# Android local machine state
+android/local.properties
+android/.gradle/
+android/captures/
+android/key.properties
+android/app/debug
+android/app/profile
+android/app/release
