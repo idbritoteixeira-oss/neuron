@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR" id="app-html">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ 
+    <!--
+    ╔══════════════════════════════════════════════════════════════════╗
+    ║  enxOS — Template SPA Base                                      ║
+    ║  Versão: 1.1 (com Menu 3 Pontinhos & Tema)                      ║
+    ╚══════════════════════════════════════════════════════════════════╝
+    -->
+ 
+    <title>enxOS — Módulo</title>
+ 
+    <!-- Folha de estilos global do ecossistema -->
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <!-- Área para separa os css adicionais da atualizações
+	<-- css -->
+    <!-- Anti-flash de tema -->
+    <script>
+        (function() {
+            var theme = localStorage.getItem('enxos_theme') || 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
+</head>
+<body>
+ 
+    <div class="main-card">
+ 
+        <!-- ── HEADER ──────────────────────────────────────────────────────── -->
+        <div class="card-header">
+            <div style="display:flex;align-items:center;gap:12px;flex:1;">
+                <div class="card-logo">OS</div>
+                <h1>enxOS</h1>
+            </div>
+ 
+            <!-- Menu de 3 Pontinhos no canto oposto ao Título -->
+            <div class="menu-container">
+                <button class="menu-dots-btn" id="menu-dots-btn" onclick="toggleOptionMenu(event)" title="Opções">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                    </svg>
+                </button>
+
+                <!-- Dropdown Menu -->
+                <div class="menu-dropdown" id="menu-dropdown">
+                    <!-- Alternar Tema -->
+                    <button class="menu-item" onclick="switchThemeMenu()">
+                        <span class="menu-item-icon" id="theme-toggle-icon">🌚</span>
+                        <span id="theme-toggle-label">Dark</span>
+                    </button>
+                    
+                    <div class="menu-divider"></div>
+
+                    <!-- Configurações -->
+                    <button class="menu-item" onclick="alert('Configurações do módulo')">
+                        <span class="menu-item-icon">⚙️</span>
+                        <span>Configurações</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+ 
+        <!-- ── CORPO ────────────────────────────────────────────────────────── -->
+        <div class="card-body" id="app-content">
+            <h2>Módulo</h2>
+            <p>Conteúdo do módulo aqui.</p>
+        </div>
+ 
+        <!-- ── FOOTER ───────────────────────────────────────────────────────── -->
+        <div class="card-footer">
+            <span class="enxos-siwatercolor"></span>
+            <span class="enxos-tiwatercolot" id="watercolor">{/enxOS...</span>
+        </div>
+ 
+    </div><!-- /.main-card -->
+ 
+    <!-- Core obrigatório -->
+    <script src="/assets/js/enxos-core.js"></script>
+
+    <script>
+        // Controla a abertura e fechamento do Dropdown Menu
+        function toggleOptionMenu(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('menu-dropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // Fecha o menu se o usuário clicar fora dele
+        window.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('menu-dropdown');
+            const dotsBtn = document.getElementById('menu-dots-btn');
+            if (dropdown && !dotsBtn.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // Atualiza os ícones/textos dentro do menu de acordo com o tema atual
+        function updateUITheme() {
+            const temaAtual = document.documentElement.getAttribute('data-theme') || 'light';
+            const iconSpan = document.getElementById('theme-toggle-icon');
+            const labelSpan = document.getElementById('theme-toggle-label');
+
+            if (temaAtual === 'dark') {
+                if (iconSpan) iconSpan.textContent = '🌝';
+                if (labelSpan) labelSpan.textContent = 'Light';
+            } else {
+                if (iconSpan) iconSpan.textContent = '🌚';
+                if (labelSpan) labelSpan.textContent = 'Dark';
+            }
+        }
+
+        // Alterna o tema (Corrigido os parênteses da função)
+        function switchThemeMenu() {
+            if (typeof EnxCore !== 'undefined' && EnxCore.toggleTheme) {
+                EnxCore.toggleTheme();
+            } else if (typeof EnxCore !== 'undefined' && EnxCore.toggleTema) {
+                EnxCore.toggleTema();
+            } else {
+                // Fallback de alternância local
+                let temaAtual = document.documentElement.getAttribute('data-theme') || 'light';
+                let novoTema = temaAtual === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', novoTema);
+                localStorage.setItem('enxos_theme', novoTema);
+            }
+            updateUITheme();
+            document.getElementById('menu-dropdown').classList.remove('show');
+        }
+
+        // Executa na inicialização para ajustar a interface
+        document.addEventListener('DOMContentLoaded', updateUITheme);
+    </script>
+</body>
+</html>

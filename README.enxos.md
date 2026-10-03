@@ -11,6 +11,15 @@ Pigeon e FreeMarket, e uma ação opcional de serviço Android em primeiro plano
 - `web/` — shell web padrão do Flutter.
 - `.github/workflows/android_build.yml` — build do APK de release ao enviar para `main` ou manualmente.
 
+## Interface compartilhada
+
+Login, dashboard e telas dos módulos usam o mesmo `EnxosShell`: cartão central
+responsivo, marca enxOS, menu de tema/configurações, corpo rolável e rodapé.
+As cores claras/escuras vêm da referência em `UI/`; a preferência fica salva no
+dispositivo. O fundo em grade sincroniza sua cor a cada 12 segundos com
+`https://tts.enxos.online/s/r2021.php`. Se a rede não responder, a interface
+continua com a cor-base do tema e mantém a última cor sincronizada.
+
 ## Executar e compilar
 
 Com Flutter stable instalado:

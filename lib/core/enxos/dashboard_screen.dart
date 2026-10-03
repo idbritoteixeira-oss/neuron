@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'auth_state.dart';
 import 'enx_module.dart';
 import 'foreground_service.dart';
+import 'enxos_shell.dart';
+import 'enxos_theme.dart';
 import 'module_state.dart';
 import 'module_unlock_dialog.dart';
 import '../../modules/freemarket/freemarket_screen.dart';
@@ -92,110 +94,97 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthState>();
     final modules = context.watch<ModuleState>();
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('enxOS'),
-        actions: [
-          IconButton(
-            tooltip: 'Sair',
-            onPressed: _signOut,
-            icon: const Icon(Icons.logout),
+    final palette = EnxosTheme.paletteOf(context);
+    return EnxosShell(
+      onSignOut: _signOut,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(2, 4, 2, 20),
+        children: [
+          Text(
+            'Olá, ${auth.publicId ?? 'usuário'}',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: palette.textPrimary,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(height: 8),
+          Text(
+            'Sua sessão enxOS está ativa. Escolha um módulo para continuar.',
+            style: TextStyle(color: palette.textSecondary, height: 1.45),
+          ),
+          const SizedBox(height: 22),
+          Container(
+            decoration: BoxDecoration(
+              color: palette.card,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: palette.border),
+            ),
+            child: SwitchListTile.adaptive(
+              value: _serviceRunning,
+              onChanged: !ForegroundServiceController.isSupported || _serviceBusy
+                  ? null
+                  : _toggleService,
+              secondary: Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: palette.module.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Icon(
+                  Icons.notifications_active_outlined,
+                  color: palette.module,
+                ),
+              ),
+              title: const Text('Serviço em segundo plano'),
+              subtitle: Text(
+                _serviceRunning
+                    ? 'Ativo • notificação persistente'
+                    : ForegroundServiceController.isSupported
+                    ? 'Desativado • requer permissão de notificação'
+                    : 'Disponível apenas no Android',
+                style: TextStyle(color: palette.textSecondary),
+              ),
+            ),
+          ),
+          const SizedBox(height: 26),
+          Row(
+            children: [
+              Text(
+                'Módulos',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: palette.textPrimary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '${modules.unlockedCount}/3 desbloqueados',
+                style: TextStyle(color: palette.textMuted, fontSize: 12),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...EnxModule.values.map(
+            (module) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _ModuleCard(
+                module: module,
+                unlocked: modules.isUnlocked(module),
+                onTap: () => _openModule(module),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'A chave privada de cada módulo é isolada da sessão global e não é armazenada.',
+            style: TextStyle(
+              color: palette.textMuted,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
         ],
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-          children: [
-            Text(
-              'Olá, ${auth.publicId ?? 'usuário'}',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Sua sessão enxOS está ativa. Escolha um módulo para continuar.',
-              style: TextStyle(color: Color(0xFFA7B7C8), height: 1.45),
-            ),
-            const SizedBox(height: 22),
-            Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF101C2A),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFF24374A)),
-              ),
-              child: SwitchListTile.adaptive(
-                value: _serviceRunning,
-                onChanged: !ForegroundServiceController.isSupported ||
-                        _serviceBusy
-                    ? null
-                    : _toggleService,
-                secondary: Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF64E1D4).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(13),
-                  ),
-                  child: const Icon(
-                    Icons.notifications_active_outlined,
-                    color: Color(0xFF64E1D4),
-                  ),
-                ),
-                title: const Text('Serviço em segundo plano'),
-                subtitle: Text(
-                  _serviceRunning
-                      ? 'Ativo • notificação persistente'
-                      : ForegroundServiceController.isSupported
-                      ? 'Desativado • requer permissão de notificação'
-                      : 'Disponível apenas no Android',
-                  style: const TextStyle(color: Color(0xFFA7B7C8)),
-                ),
-              ),
-            ),
-            const SizedBox(height: 26),
-            Row(
-              children: [
-                Text(
-                  'Módulos',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  '${modules.unlockedCount}/3 desbloqueados',
-                  style: const TextStyle(
-                    color: Color(0xFF8294A8),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ...EnxModule.values.map(
-              (module) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _ModuleCard(
-                  module: module,
-                  unlocked: modules.isUnlocked(module),
-                  onTap: () => _openModule(module),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'A chave privada de cada módulo é isolada da sessão global e não é armazenada.',
-              style: TextStyle(
-                color: Color(0xFF8294A8),
-                fontSize: 12,
-                height: 1.5,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -220,17 +209,18 @@ class _ModuleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = EnxosTheme.paletteOf(context);
     return Material(
-      color: const Color(0xFF101C2A),
-      borderRadius: BorderRadius.circular(20),
+      color: palette.card,
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.all(17),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFF24374A)),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: palette.border),
           ),
           child: Row(
             children: [
@@ -238,10 +228,10 @@ class _ModuleCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF64E1D4).withValues(alpha: 0.12),
+                  color: palette.module.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(15),
                 ),
-                child: Icon(_icon, color: const Color(0xFF64E1D4)),
+                child: Icon(_icon, color: palette.module),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -250,13 +240,16 @@ class _ModuleCard extends StatelessWidget {
                   children: [
                     Text(
                       module.title,
-                      style: const TextStyle(fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        color: palette.textPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '${module.id} · ${module.description}',
-                      style: const TextStyle(
-                        color: Color(0xFFA7B7C8),
+                      style: TextStyle(
+                        color: palette.textSecondary,
                         fontSize: 12,
                       ),
                     ),
@@ -267,8 +260,8 @@ class _ModuleCard extends StatelessWidget {
                 unlocked ? Icons.check_circle : Icons.lock_outline,
                 size: 20,
                 color: unlocked
-                    ? const Color(0xFF64E1D4)
-                    : const Color(0xFF8294A8),
+                    ? palette.module
+                    : palette.textMuted,
               ),
             ],
           ),
@@ -285,53 +278,45 @@ class ModuleHomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(module.title),
-        actions: [
-          TextButton.icon(
-            onPressed: () {
-              context.read<ModuleState>().lock(module);
-              Navigator.of(context).pop();
-            },
-            icon: const Icon(Icons.lock_outline),
-            label: const Text('Bloquear'),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(28),
+    final palette = EnxosTheme.paletteOf(context);
+    return EnxosShell(
+      sectionLabel: module.title,
+      extraActionLabel: 'Bloquear módulo',
+      extraActionIcon: Icons.lock_outline,
+      onExtraAction: () {
+        context.read<ModuleState>().lock(module);
+        Navigator.of(context).pop();
+      },
+      child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
+              Icon(
                 Icons.verified_user_outlined,
                 size: 50,
-                color: Color(0xFF64E1D4),
+                color: palette.module,
               ),
               const SizedBox(height: 18),
               Text(
                 '${module.title} desbloqueado',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: palette.textPrimary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 10),
               Text(
                 'Sessão isolada • ${module.id}',
-                style: const TextStyle(color: Color(0xFFA7B7C8)),
+                style: TextStyle(color: palette.textSecondary),
               ),
               const SizedBox(height: 18),
-              const Text(
+              Text(
                 'Tela-base do módulo. Conecte aqui os recursos específicos do produto.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Color(0xFF8294A8),
-                  height: 1.5,
-                ),
+                style: TextStyle(color: palette.textMuted, height: 1.5),
               ),
             ],
           ),

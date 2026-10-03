@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'enx_module.dart';
+import 'enxos_theme.dart';
 import 'module_state.dart';
 
 class ModuleUnlockDialog extends StatefulWidget {
@@ -55,7 +56,9 @@ class _ModuleUnlockDialogState extends State<ModuleUnlockDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = EnxosTheme.paletteOf(context);
     return AlertDialog(
+      backgroundColor: palette.modal,
       title: Text('Desbloquear ${widget.module.title}'),
       content: Form(
         key: _formKey,
@@ -64,7 +67,7 @@ class _ModuleUnlockDialogState extends State<ModuleUnlockDialog> {
           children: [
             Text(
               'Informe as credenciais individuais do módulo ${widget.module.id}.',
-              style: const TextStyle(color: Color(0xFFA7B7C8), height: 1.45),
+              style: TextStyle(color: palette.textSecondary, height: 1.45),
             ),
             const SizedBox(height: 18),
             TextFormField(

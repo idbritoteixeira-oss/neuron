@@ -6,17 +6,24 @@ import 'package:provider/provider.dart';
 import 'core/enxos/auth_repository.dart';
 import 'core/enxos/auth_state.dart';
 import 'core/enxos/enxos_app.dart';
+import 'core/enxos/enxos_ui_state.dart';
+import 'core/enxos/enxos_watercolor_state.dart';
 import 'core/enxos/module_state.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
     FlutterForegroundTask.initCommunicationPort();
   }
 
+  final uiState = await EnxosUiState.restore();
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider<EnxosUiState>.value(value: uiState),
+        ChangeNotifierProvider(
+          create: (_) => EnxosWatercolorState()..start(),
+        ),
         ChangeNotifierProvider(
           create: (_) => AuthState(DemoEnxosAuthRepository()),
         ),
