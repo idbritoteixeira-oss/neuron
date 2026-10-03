@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "enxOS Web Preview"
+description = "A browser-based visual mirror of the enxOS Flutter app for previewing its login, dashboard, module screens, and light/dark shell in Replit Webview. This is a separate preview implementation, not the Flutter runtime."
+version = "1.0.0"
+id = "artifacts/enxos-webview"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22456
+
+[services.development]
+run = "pnpm --filter @workspace/enxos-webview run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/enxos-webview", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/enxos-webview/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22456"
+BASE_PATH = "/"
