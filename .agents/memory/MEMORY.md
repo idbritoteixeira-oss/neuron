@@ -1,0 +1,1 @@
+- [enxOS header scope](enxos-header-scope.md) — Header changes belong in Flutter/Dart; leave the web preview untouched unless explicitly requested.

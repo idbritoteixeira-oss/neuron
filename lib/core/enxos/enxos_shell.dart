@@ -140,9 +140,16 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentModule = module;
+    final logoText = currentModule?.abbreviation ?? 'OS';
+    final logoColor = currentModule == null
+        ? palette.module
+        : Color(currentModule.brandColorValue);
+    final logoTextColor = logoColor.computeLuminance() > 0.30
+        ? const Color(0xFF17242A)
+        : Colors.white;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(18, 10, 10, 10),
+      padding: const EdgeInsets.fromLTRB(18, 10, 20, 10),
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: palette.border, width: 2)),
       ),
@@ -152,25 +159,19 @@ class _Header extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: palette.module,
+              color: logoColor,
               borderRadius: BorderRadius.circular(8),
             ),
             alignment: Alignment.center,
-            child: currentModule == null
-                ? const Text(
-                    'OS',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.5,
-                    ),
-                  )
-                : Icon(
-                    _moduleLogoIcon(currentModule),
-                    color: Colors.white,
-                    size: 19,
-                  ),
+            child: Text(
+              logoText,
+              style: TextStyle(
+                color: logoTextColor,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
+              ),
+            ),
           ),
           const SizedBox(width: 12),
           Flexible(
@@ -251,12 +252,6 @@ class _Header extends StatelessWidget {
     );
   }
 }
-
-IconData _moduleLogoIcon(EnxModule module) => switch (module) {
-  EnxModule.inasx => Icons.hub_outlined,
-  EnxModule.pigeon => Icons.send_outlined,
-  EnxModule.freemarket => Icons.storefront_outlined,
-};
 
 class _MenuLabel extends StatelessWidget {
   const _MenuLabel({required this.icon, required this.text});
