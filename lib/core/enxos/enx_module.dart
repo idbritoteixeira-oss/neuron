@@ -1,18 +1,18 @@
 enum EnxModule {
   inasx(
     title: 'Inasx',
-    id: 'id_inx',
-    description: 'Espaço operacional Inasx',
+    id: 'inasxId',
+    description: 'Crypto Currency Inasx',
   ),
   pigeon(
     title: 'Pigeon',
-    id: 'id_pru',
-    description: 'Espaço operacional Pigeon',
+    id: 'pigeonId',
+    description: 'Media Outlet Pigeon',
   ),
   freemarket(
     title: 'FreeMarket',
-    id: 'id_fmk',
-    description: 'Espaço operacional FreeMarket',
+    id: 'freeId',
+    description: 'Central Financial Market FreeMarket',
   );
 
   const EnxModule({

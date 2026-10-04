@@ -280,7 +280,7 @@ class ModuleHomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = EnxosTheme.paletteOf(context);
     return EnxosShell(
-      sectionLabel: module.title,
+      module: module,
       extraActionLabel: 'Bloquear módulo',
       extraActionIcon: Icons.lock_outline,
       onExtraAction: () {

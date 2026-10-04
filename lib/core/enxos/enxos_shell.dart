@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'enxos_grid_painter.dart';
+import 'enx_module.dart';
 import 'enxos_theme.dart';
 import 'enxos_ui_state.dart';
 import 'enxos_watercolor_state.dart';
@@ -11,7 +12,7 @@ import 'enxos_watercolor_state.dart';
 class EnxosShell extends StatelessWidget {
   const EnxosShell({
     required this.child,
-    this.sectionLabel,
+    this.module,
     this.onSignOut,
     this.extraActionLabel,
     this.extraActionIcon,
@@ -20,7 +21,7 @@ class EnxosShell extends StatelessWidget {
   });
 
   final Widget child;
-  final String? sectionLabel;
+  final EnxModule? module;
   final VoidCallback? onSignOut;
   final String? extraActionLabel;
   final IconData? extraActionIcon;
@@ -81,7 +82,7 @@ class EnxosShell extends StatelessWidget {
                             _Header(
                               palette: palette,
                               uiState: uiState,
-                              sectionLabel: sectionLabel,
+                              module: module,
                               onSignOut: onSignOut,
                               extraActionLabel: extraActionLabel,
                               extraActionIcon: extraActionIcon,
@@ -121,7 +122,7 @@ class _Header extends StatelessWidget {
   const _Header({
     required this.palette,
     required this.uiState,
-    required this.sectionLabel,
+    required this.module,
     required this.onSignOut,
     required this.extraActionLabel,
     required this.extraActionIcon,
@@ -130,7 +131,7 @@ class _Header extends StatelessWidget {
 
   final EnxosPalette palette;
   final EnxosUiState uiState;
-  final String? sectionLabel;
+  final EnxModule? module;
   final VoidCallback? onSignOut;
   final String? extraActionLabel;
   final IconData? extraActionIcon;
@@ -138,6 +139,8 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currentModule = module;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 10, 10, 10),
       decoration: BoxDecoration(
@@ -153,47 +156,37 @@ class _Header extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             alignment: Alignment.center,
-            child: const Text(
-              'OS',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.5,
-              ),
+            child: currentModule == null
+                ? const Text(
+                    'OS',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.5,
+                    ),
+                  )
+                : Icon(
+                    _moduleLogoIcon(currentModule),
+                    color: Colors.white,
+                    size: 19,
+                  ),
             ),
           ),
           const SizedBox(width: 12),
-          Text(
-            'enxOS',
-            style: TextStyle(
-              color: palette.textPrimary,
-              fontSize: 29,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.8,
-            ),
-          ),
-          if (sectionLabel != null) ...[
-            const SizedBox(width: 12),
-            Flexible(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: palette.border,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  sectionLabel!,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: palette.textSecondary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+          Flexible(
+            child: Text(
+              currentModule?.title ?? 'enxOS',
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+              style: TextStyle(
+                color: palette.textPrimary,
+                fontSize: 29,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.8,
               ),
             ),
-          ],
+          ),
           const Spacer(),
           PopupMenuButton<_ShellAction>(
             tooltip: 'Opções',
@@ -260,6 +253,12 @@ class _Header extends StatelessWidget {
   }
 }
 
+IconData _moduleLogoIcon(EnxModule module) => switch (module) {
+  EnxModule.inasx => Icons.hub_outlined,
+  EnxModule.pigeon => Icons.send_outlined,
+  EnxModule.freemarket => Icons.storefront_outlined,
+};
+
 class _MenuLabel extends StatelessWidget {
   const _MenuLabel({required this.icon, required this.text});
 
@@ -297,8 +296,8 @@ class _Footer extends StatelessWidget {
         alignment: Alignment.centerRight,
         child: Text(
           watercolor.sourceValue == null
-              ? '{/enxOS ${watercolor.isConnected ? 'sincronizando' : 'offline'}}'
-              : '{/enxOS ${watercolor.sourceValue}}',
+              ? '{/enxOS${watercolor.isConnected ? '...' : 'offline'}}'
+              : '{/enxOS${watercolor.sourceValue}}',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.right,
