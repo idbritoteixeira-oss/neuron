@@ -171,7 +171,6 @@ class _Header extends StatelessWidget {
                     color: Colors.white,
                     size: 19,
                   ),
-            ),
           ),
           const SizedBox(width: 12),
           Flexible(
