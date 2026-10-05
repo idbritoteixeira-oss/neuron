@@ -97,14 +97,14 @@ class EnxosShell extends StatelessWidget {
                                 child: child,
                               ),
                             ),
-                            _Footer(
-                              palette: palette,
-                              watercolor: watercolor,
-                            ),
-                            _AppLauncher(
+                                  _AppLauncher(
                               palette: palette,
                               selectedModule: module,
                               onSelect: onLauncherTap,
+                            ),
+_Footer(
+                              palette: palette,
+                              watercolor: watercolor,
                             ),
                           ],
                         ),
@@ -182,7 +182,7 @@ class _HeaderState extends State<_Header> {
   @override
   Widget build(BuildContext context) {
     final currentModule = widget.module;
-    final logoText = currentModule?.abbreviation ?? 'eos';
+    final logoText = currentModule?.abbreviation ?? 'os';
     final logoColor = currentModule == null
         ? widget.palette.module
         : Color(currentModule.brandColorValue);
@@ -351,7 +351,7 @@ class _AppLauncher extends StatelessWidget {
     final items = [
       _LauncherItem(
         label: 'enxOS',
-        abbreviation: 'eos',
+        abbreviation: 'os',
         color: palette.module,
       ),
       ..._moduleOrder.take(_maxModuleButtons).map(
@@ -500,8 +500,8 @@ class _Footer extends StatelessWidget {
         alignment: Alignment.centerRight,
         child: Text(
           watercolor.sourceValue == null
-              ? '{/enxOS${watercolor.isConnected ? '...' : 'offline'}}'
-              : '{/enxOS${watercolor.sourceValue}}',
+              ? '{/enxOS ${watercolor.isConnected ? '...' : 'offline'}}'
+              : '{/enxOS ${watercolor.sourceValue}}',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.right,
