@@ -179,10 +179,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _signOut() async {
     // Parar serviço se estiver rodando
-    final serviceState = context.read<ForegroundServiceState>();
-    if (serviceState.isRunning) {
-      await serviceState.stop();
-    }
+    //final serviceState = context.read<ForegroundServiceState>();
+    //if (serviceState.isRunning) {
+      //await serviceState.stop();
+    //}
     if (!mounted) return;
     context.read<ModuleState>().clear();
     context.read<AuthState>().signOut();

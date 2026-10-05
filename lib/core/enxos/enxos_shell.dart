@@ -252,8 +252,8 @@ class _Header extends StatelessWidget {
                 case _ShellAction.settings:
                   _showSettings(context);
                 case _ShellAction.serviceToggle:
-                  final serviceState = context.read<ForegroundServiceState>();
-                  serviceState.toggle(!serviceState.isRunning);
+                  //final serviceState = context.read<ForegroundServiceState>();
+                  //serviceState.toggle(!serviceState.isRunning);
                 case _ShellAction.extra:
                   onExtraAction?.call();
                 case _ShellAction.signOut:
