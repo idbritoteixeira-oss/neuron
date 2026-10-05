@@ -12,6 +12,42 @@ import '../../modules/freemarket/freemarket_screen.dart';
 import '../../modules/inasx/inasx_screen.dart';
 import '../../modules/pigeon/pigeon_screen.dart';
 
+// Models
+class NewsPost {
+  final String id;
+  final String imageUrl;
+  final String author;
+  final String quote;
+  final DateTime timestamp;
+
+  NewsPost({
+    required this.id,
+    required this.imageUrl,
+    required this.author,
+    required this.quote,
+    required this.timestamp,
+  });
+}
+
+class BlockEntry {
+  final String blockId;
+  final Color color;
+  final int ageSeconds;
+
+  BlockEntry({
+    required this.blockId,
+    required this.color,
+    required this.ageSeconds,
+  });
+
+  String get ageLabel {
+    if (ageSeconds < 60) return '${ageSeconds}s';
+    if (ageSeconds < 3600) return '${(ageSeconds / 60).floor()}m';
+    if (ageSeconds < 86400) return '${(ageSeconds / 3600).floor()}h';
+    return '${(ageSeconds / 86400).floor()}d';
+  }
+}
+
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -20,45 +56,76 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  bool _serviceRunning = false;
-  bool _serviceBusy = false;
+  late PageController _newsPageController;
+  int _newsCurrentPage = 0;
+  late List<NewsPost> _mockNewsPosts;
+  late List<BlockEntry> _mockBlocks;
 
   @override
   void initState() {
     super.initState();
-    _refreshServiceState();
+    _newsPageController = PageController();
+    _initMockData();
   }
 
-  Future<void> _refreshServiceState() async {
-    final running = await ForegroundServiceController.isRunning;
-    if (mounted) setState(() => _serviceRunning = running);
+  void _initMockData() {
+    _mockNewsPosts = [
+      NewsPost(
+        id: 'news_1',
+        imageUrl: 'https://via.placeholder.com/400x250?text=News+1',
+        author: 'Steve',
+        quote: 'Arquitetura clara: shell compartilhado com módulos isolados',
+        timestamp: DateTime.now().subtract(const Duration(minutes: 45)),
+      ),
+      NewsPost(
+        id: 'news_2',
+        imageUrl: 'https://via.placeholder.com/400x250?text=News+2',
+        author: 'Alice',
+        quote: 'Persistência local de tema + sincronização remota de cor',
+        timestamp: DateTime.now().subtract(const Duration(hours: 2)),
+      ),
+      NewsPost(
+        id: 'news_3',
+        imageUrl: 'https://via.placeholder.com/400x250?text=News+3',
+        author: 'Bob',
+        quote: 'Serviço Android com notificação persistente',
+        timestamp: DateTime.now().subtract(const Duration(hours: 5)),
+      ),
+    ];
+
+    _mockBlocks = [
+      BlockEntry(
+        blockId: '7243166401486250',
+        color: const Color(0xFF5D3A8A),
+        ageSeconds: 25,
+      ),
+      BlockEntry(
+        blockId: '4455667788990011',
+        color: const Color(0xFF5AB31E),
+        ageSeconds: 60,
+      ),
+      BlockEntry(
+        blockId: '2233445566778899',
+        color: const Color(0xFFB3611E),
+        ageSeconds: 120,
+      ),
+      BlockEntry(
+        blockId: '9900887766554433',
+        color: const Color(0xFF4A90E2),
+        ageSeconds: 180,
+      ),
+      BlockEntry(
+        blockId: '3344556677788900',
+        color: const Color(0xFF1ABC9C),
+        ageSeconds: 240,
+      ),
+    ];
   }
 
-  Future<void> _toggleService(bool enabled) async {
-    setState(() => _serviceBusy = true);
-    try {
-      if (enabled) {
-        final started = await ForegroundServiceController.start();
-        if (!started && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Permita notificações para iniciar o serviço.'),
-            ),
-          );
-        }
-      } else {
-        await ForegroundServiceController.stop();
-      }
-      await _refreshServiceState();
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Não foi possível alterar o serviço.')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _serviceBusy = false);
-    }
+  @override
+  void dispose() {
+    _newsPageController.dispose();
+    super.dispose();
   }
 
   Future<void> _openModule(EnxModule module) async {
@@ -74,25 +141,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
         builder: (_) => switch (module) {
-          EnxModule.inasx => InasxScreen(onLauncherTap: _onLauncherTap),
-          EnxModule.pigeon => PigeonScreen(onLauncherTap: _onLauncherTap),
-          EnxModule.freemarket => FreeMarketScreen(
-            onLauncherTap: _onLauncherTap,
-          ),
+          EnxModule.inasx => const InasxScreen(),
+          EnxModule.pigeon => const PigeonScreen(),
+          EnxModule.freemarket => const FreeMarketScreen(),
         },
       ),
     );
     if (mounted) setState(() {});
-  }
-
-  Future<void> _onLauncherTap(EnxModule? target) async {
-    if (target == null) {
-      Navigator.of(context).popUntil((route) => route.isFirst);
-      return;
-    }
-
-    Navigator.of(context).popUntil((route) => route.isFirst);
-    await _openModule(target);
   }
 
   Future<void> _signOut() async {
@@ -102,17 +157,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
     context.read<AuthState>().signOut();
   }
 
+  void _handleAppLaunch(AppLaunchTarget target) {
+    switch (target) {
+      case AppLaunchTarget.home:
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        break;
+      case AppLaunchTarget.inasx:
+        _openModule(EnxModule.inasx);
+        break;
+      case AppLaunchTarget.pigeon:
+        _openModule(EnxModule.pigeon);
+        break;
+      case AppLaunchTarget.freemarket:
+        _openModule(EnxModule.freemarket);
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthState>();
-    final modules = context.watch<ModuleState>();
     final palette = EnxosTheme.paletteOf(context);
+
     return EnxosShell(
-      onLauncherTap: _onLauncherTap,
       onSignOut: _signOut,
+      onAppLaunched: _handleAppLaunch,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(2, 4, 2, 20),
         children: [
+          // Saudação
           Text(
             'Olá, ${auth.publicId ?? 'usuário'}',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -122,79 +195,71 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Sua sessão enxOS está ativa. Escolha um módulo para continuar.',
+            'Sua sessão enxOS está ativa.',
             style: TextStyle(color: palette.textSecondary, height: 1.45),
           ),
           const SizedBox(height: 22),
-          Container(
-            decoration: BoxDecoration(
-              color: palette.card,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: palette.border),
+
+          // #news Carousel
+          Text(
+            '#news',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: palette.textPrimary,
+              fontWeight: FontWeight.w700,
             ),
-            child: SwitchListTile.adaptive(
-              value: _serviceRunning,
-              onChanged: !ForegroundServiceController.isSupported || _serviceBusy
-                  ? null
-                  : _toggleService,
-              secondary: Container(
-                width: 42,
-                height: 42,
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 280,
+            child: PageView.builder(
+              controller: _newsPageController,
+              onPageChanged: (index) {
+                setState(() => _newsCurrentPage = index);
+              },
+              itemCount: _mockNewsPosts.length,
+              itemBuilder: (context, index) {
+                final post = _mockNewsPosts[index];
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: _NewsCard(post: post, palette: palette),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Indicadores
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              _mockNewsPosts.length,
+              (index) => Container(
+                width: 8,
+                height: 8,
+                margin: const EdgeInsets.symmetric(horizontal: 4),
                 decoration: BoxDecoration(
-                  color: palette.module.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(13),
+                  shape: BoxShape.circle,
+                  color: index == _newsCurrentPage
+                      ? palette.module
+                      : palette.textMuted.withValues(alpha: 0.3),
                 ),
-                child: Icon(
-                  Icons.notifications_active_outlined,
-                  color: palette.module,
-                ),
-              ),
-              title: const Text('Serviço em segundo plano'),
-              subtitle: Text(
-                _serviceRunning
-                    ? 'Ativo • notificação persistente'
-                    : ForegroundServiceController.isSupported
-                    ? 'Desativado • requer permissão de notificação'
-                    : 'Disponível apenas no Android',
-                style: TextStyle(color: palette.textSecondary),
               ),
             ),
           ),
           const SizedBox(height: 26),
-          Row(
-            children: [
-              Text(
-                'Módulos',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: palette.textPrimary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                '${modules.unlockedCount}/3 desbloqueados',
-                style: TextStyle(color: palette.textMuted, fontSize: 12),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ...EnxModule.values.map(
-            (module) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _ModuleCard(
-                module: module,
-                unlocked: modules.isUnlocked(module),
-                onTap: () => _openModule(module),
-              ),
+
+          // Últimos blocos
+          Text(
+            'Últimos blocos',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: palette.textPrimary,
+              fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'A chave privada de cada módulo é isolada da sessão global e não é armazenada.',
-            style: TextStyle(
-              color: palette.textMuted,
-              fontSize: 12,
-              height: 1.5,
+          const SizedBox(height: 12),
+          ..._mockBlocks.map(
+            (block) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _BlockBar(block: block, palette: palette),
             ),
           ),
         ],
@@ -203,103 +268,174 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-class _ModuleCard extends StatelessWidget {
-  const _ModuleCard({
-    required this.module,
-    required this.unlocked,
-    required this.onTap,
-  });
+class _NewsCard extends StatelessWidget {
+  const _NewsCard({required this.post, required this.palette});
 
-  final EnxModule module;
-  final bool unlocked;
-  final VoidCallback onTap;
-
-  IconData get _icon => switch (module) {
-    EnxModule.inasx => Icons.hub_outlined,
-    EnxModule.pigeon => Icons.send_outlined,
-    EnxModule.freemarket => Icons.storefront_outlined,
-  };
+  final NewsPost post;
+  final EnxosPalette palette;
 
   @override
   Widget build(BuildContext context) {
-    final palette = EnxosTheme.paletteOf(context);
-    return Material(
-      color: palette.card,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
+    return Container(
+      decoration: BoxDecoration(
+        color: palette.card,
         borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(17),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: palette.border),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: palette.module.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Icon(_icon, color: palette.module),
+        border: Border.all(color: palette.border),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 140,
+              width: double.infinity,
+              color: palette.textMuted.withValues(alpha: 0.1),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.network(
+                    post.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Icon(
+                      Icons.image_not_supported_outlined,
+                      color: palette.textMuted,
+                    ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF5AB31E),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text(
+                        '#news',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 14),
-              Expanded(
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      module.title,
-                      style: TextStyle(
-                        color: palette.textPrimary,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    Row(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: palette.module.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.person_outline,
+                            color: palette.module,
+                            size: 16,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          post.author,
+                          style: TextStyle(
+                            color: palette.textPrimary,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${module.id} · ${module.description}',
-                      style: TextStyle(
-                        color: palette.textSecondary,
-                        fontSize: 12,
+                    const SizedBox(height: 10),
+                    Expanded(
+                      child: Text(
+                        post.quote,
+                        style: TextStyle(
+                          color: palette.textPrimary,
+                          fontSize: 13,
+                          height: 1.4,
+                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
               ),
-              Icon(
-                unlocked ? Icons.check_circle : Icons.lock_outline,
-                size: 20,
-                color: unlocked
-                    ? palette.module
-                    : palette.textMuted,
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
+class _BlockBar extends StatelessWidget {
+  const _BlockBar({required this.block, required this.palette});
+
+  final BlockEntry block;
+  final EnxosPalette palette;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 16,
+          height: 48,
+          decoration: BoxDecoration(
+            color: block.color,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            block.blockId,
+            style: TextStyle(
+              color: palette.textPrimary,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              fontFamily: 'monospace',
+            ),
+          ),
+        ),
+        Text(
+          block.ageLabel,
+          style: TextStyle(
+            color: palette.textMuted,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class ModuleHomeScreen extends StatelessWidget {
-  const ModuleHomeScreen({
-    required this.module,
-    required this.onLauncherTap,
-    super.key,
-  });
+  const ModuleHomeScreen({required this.module, super.key});
 
   final EnxModule module;
-  final EnxosLauncherCallback onLauncherTap;
 
   @override
   Widget build(BuildContext context) {
     final palette = EnxosTheme.paletteOf(context);
     return EnxosShell(
       module: module,
-      onLauncherTap: onLauncherTap,
       extraActionLabel: 'Bloquear módulo',
       extraActionIcon: Icons.lock_outline,
       onExtraAction: () {
