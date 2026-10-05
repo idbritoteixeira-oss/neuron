@@ -453,7 +453,7 @@ class _AppLauncherButton extends StatelessWidget {
                       maxLines: 1,
                       style: TextStyle(
                         color: textColor,
-                        fontSize: item.abbreviation.length > 3 ? 9 : 11,
+                        fontSize: item.abbreviation.length > 3 ? 9 : 18,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.4,
                       ),

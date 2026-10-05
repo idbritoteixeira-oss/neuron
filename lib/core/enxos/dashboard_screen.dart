@@ -107,17 +107,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
       BlockEntry(
         blockId: '2233445566778899',
         color: const Color(0xFFB3611E),
-        ageSeconds: 120,
+        ageSeconds: 60,
       ),
       BlockEntry(
         blockId: '9900887766554433',
         color: const Color(0xFF4A90E2),
-        ageSeconds: 180,
+        ageSeconds: 60,
       ),
       BlockEntry(
         blockId: '3344556677788900',
         color: const Color(0xFF1ABC9C),
-        ageSeconds: 240,
+        ageSeconds: 60,
       ),
     ];
   }
@@ -157,21 +157,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     context.read<AuthState>().signOut();
   }
 
-  void _handleAppLaunch(AppLaunchTarget target) {
-    switch (target) {
-      case AppLaunchTarget.home:
-        Navigator.of(context).popUntil((route) => route.isFirst);
-        break;
-      case AppLaunchTarget.inasx:
-        _openModule(EnxModule.inasx);
-        break;
-      case AppLaunchTarget.pigeon:
-        _openModule(EnxModule.pigeon);
-        break;
-      case AppLaunchTarget.freemarket:
-        _openModule(EnxModule.freemarket);
-        break;
+  void _handleLauncherTap(EnxModule? module) {
+    if (module == null) {
+      // Home (enxOS) — já na dashboard
+      return;
     }
+    _openModule(module);
   }
 
   @override
@@ -181,7 +172,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return EnxosShell(
       onSignOut: _signOut,
-      onAppLaunched: _handleAppLaunch,
+      onLauncherTap: _handleLauncherTap,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(2, 4, 2, 20),
         children: [
