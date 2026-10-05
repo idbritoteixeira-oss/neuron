@@ -157,13 +157,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     context.read<AuthState>().signOut();
   }
 
-  Future<void> _handleLauncherTap(EnxModule? module) async {
-    if (module == null) {
-      // Home (enxOS) — já na dashboard
-      return;
-    }
-    await _openModule(module);
+ Future<void> _handleLauncherTap(EnxModule? module) async {
+  if (module == null) {
+    // Home (enxOS) — volta pro dashboard
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    return;
   }
+  await _openModule(module);
+ }
 
   @override
   Widget build(BuildContext context) {
@@ -185,11 +186,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            'Sua sessão enxOS está ativa.',
-            style: TextStyle(color: palette.textSecondary, height: 1.45),
-          ),
-          const SizedBox(height: 22),
 
           // #news Carousel
           Text(
