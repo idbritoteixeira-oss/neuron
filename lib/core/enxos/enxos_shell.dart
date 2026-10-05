@@ -8,8 +8,6 @@ import 'enx_module.dart';
 import 'enxos_theme.dart';
 import 'enxos_ui_state.dart';
 import 'enxos_watercolor_state.dart';
-import 'foreground_service_state.dart';
-import 'foreground_service_state.dart';
 
 // Enum para identificar qual app foi tapped
 enum AppLaunchTarget { home, inasx, pigeon, freemarket }

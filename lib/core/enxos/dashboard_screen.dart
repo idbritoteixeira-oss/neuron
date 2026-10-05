@@ -5,7 +5,6 @@ import 'auth_state.dart';
 import 'enx_module.dart';
 import 'enxos_shell.dart';
 import 'enxos_theme.dart';
-import 'foreground_service_state.dart';
 import 'module_state.dart';
 import 'module_unlock_dialog.dart';
 import '../../modules/freemarket/freemarket_screen.dart';
@@ -305,7 +304,7 @@ class _NewsCard extends StatelessWidget {
   const _NewsCard({required this.post, required this.palette});
 
   final NewsPost post;
-  final EnxosThemePalette palette;
+  final EnxosPalette palette;
 
   @override
   Widget build(BuildContext context) {
@@ -315,7 +314,6 @@ class _NewsCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: palette.border),
       ),
-      overflow: Hidden.clip,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -424,7 +422,7 @@ class _BlockBar extends StatelessWidget {
   const _BlockBar({required this.block, required this.palette});
 
   final BlockEntry block;
-  final EnxosThemePalette palette;
+  final EnxosPalette palette;
 
   @override
   Widget build(BuildContext context) {
