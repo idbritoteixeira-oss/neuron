@@ -12,6 +12,5 @@ class InasxScreen extends StatelessWidget {
   Widget build(BuildContext context) =>
       ModuleHomeScreen(
         module: EnxModule.inasx,
-        onLauncherTap: onLauncherTap,
       );
 }
