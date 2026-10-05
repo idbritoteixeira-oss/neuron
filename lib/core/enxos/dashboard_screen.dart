@@ -141,9 +141,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
         builder: (_) => switch (module) {
-          EnxModule.inasx => const InasxScreen(),
-          EnxModule.pigeon => const PigeonScreen(),
-          EnxModule.freemarket => const FreeMarketScreen(),
+          EnxModule.inasx => InasxScreen(onLauncherTap: _handleLauncherTap),
+          EnxModule.pigeon => PigeonScreen(onLauncherTap: _handleLauncherTap),
+          EnxModule.freemarket => FreeMarketScreen(onLauncherTap: _handleLauncherTap),
         },
       ),
     );
@@ -157,12 +157,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     context.read<AuthState>().signOut();
   }
 
-  void _handleLauncherTap(EnxModule? module) {
+  Future<void> _handleLauncherTap(EnxModule? module) async {
     if (module == null) {
       // Home (enxOS) — já na dashboard
       return;
     }
-    _openModule(module);
+    await _openModule(module);
   }
 
   @override
