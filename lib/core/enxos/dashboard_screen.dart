@@ -74,13 +74,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
         builder: (_) => switch (module) {
-          EnxModule.inasx => const InasxScreen(),
-          EnxModule.pigeon => const PigeonScreen(),
-          EnxModule.freemarket => const FreeMarketScreen(),
+          EnxModule.inasx => InasxScreen(onLauncherTap: _onLauncherTap),
+          EnxModule.pigeon => PigeonScreen(onLauncherTap: _onLauncherTap),
+          EnxModule.freemarket => FreeMarketScreen(
+            onLauncherTap: _onLauncherTap,
+          ),
         },
       ),
     );
     if (mounted) setState(() {});
+  }
+
+  Future<void> _onLauncherTap(EnxModule? target) async {
+    if (target == null) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      return;
+    }
+
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    await _openModule(target);
   }
 
   Future<void> _signOut() async {
@@ -96,6 +108,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final modules = context.watch<ModuleState>();
     final palette = EnxosTheme.paletteOf(context);
     return EnxosShell(
+      onLauncherTap: _onLauncherTap,
       onSignOut: _signOut,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(2, 4, 2, 20),
@@ -272,15 +285,21 @@ class _ModuleCard extends StatelessWidget {
 }
 
 class ModuleHomeScreen extends StatelessWidget {
-  const ModuleHomeScreen({required this.module, super.key});
+  const ModuleHomeScreen({
+    required this.module,
+    required this.onLauncherTap,
+    super.key,
+  });
 
   final EnxModule module;
+  final EnxosLauncherCallback onLauncherTap;
 
   @override
   Widget build(BuildContext context) {
     final palette = EnxosTheme.paletteOf(context);
     return EnxosShell(
       module: module,
+      onLauncherTap: onLauncherTap,
       extraActionLabel: 'Bloquear módulo',
       extraActionIcon: Icons.lock_outline,
       onExtraAction: () {

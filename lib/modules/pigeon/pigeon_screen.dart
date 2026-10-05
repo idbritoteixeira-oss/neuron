@@ -4,9 +4,14 @@ import '../../core/enxos/dashboard_screen.dart';
 import '../../core/enxos/enx_module.dart';
 
 class PigeonScreen extends StatelessWidget {
-  const PigeonScreen({super.key});
+  const PigeonScreen({required this.onLauncherTap, super.key});
+
+  final EnxosLauncherCallback onLauncherTap;
 
   @override
   Widget build(BuildContext context) =>
-      const ModuleHomeScreen(module: EnxModule.pigeon);
+      ModuleHomeScreen(
+        module: EnxModule.pigeon,
+        onLauncherTap: onLauncherTap,
+      );
 }

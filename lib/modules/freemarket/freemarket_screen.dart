@@ -4,9 +4,14 @@ import '../../core/enxos/dashboard_screen.dart';
 import '../../core/enxos/enx_module.dart';
 
 class FreeMarketScreen extends StatelessWidget {
-  const FreeMarketScreen({super.key});
+  const FreeMarketScreen({required this.onLauncherTap, super.key});
+
+  final EnxosLauncherCallback onLauncherTap;
 
   @override
   Widget build(BuildContext context) =>
-      const ModuleHomeScreen(module: EnxModule.freemarket);
+      ModuleHomeScreen(
+        module: EnxModule.freemarket,
+        onLauncherTap: onLauncherTap,
+      );
 }

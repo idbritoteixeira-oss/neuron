@@ -14,6 +14,7 @@ class EnxosShell extends StatelessWidget {
   const EnxosShell({
     required this.child,
     this.module,
+    this.onLauncherTap,
     this.onSignOut,
     this.extraActionLabel,
     this.extraActionIcon,
@@ -23,6 +24,7 @@ class EnxosShell extends StatelessWidget {
 
   final Widget child;
   final EnxModule? module;
+  final EnxosLauncherCallback? onLauncherTap;
   final VoidCallback? onSignOut;
   final String? extraActionLabel;
   final IconData? extraActionIcon;
@@ -98,6 +100,11 @@ class EnxosShell extends StatelessWidget {
                             _Footer(
                               palette: palette,
                               watercolor: watercolor,
+                            ),
+                            _AppLauncher(
+                              palette: palette,
+                              selectedModule: module,
+                              onSelect: onLauncherTap,
                             ),
                           ],
                         ),
@@ -317,6 +324,160 @@ class _MenuLabel extends StatelessWidget {
         const SizedBox(width: 12),
         Text(text),
       ],
+    );
+  }
+}
+
+class _AppLauncher extends StatelessWidget {
+  const _AppLauncher({
+    required this.palette,
+    required this.selectedModule,
+    required this.onSelect,
+  });
+
+  static const _moduleOrder = [
+    EnxModule.pigeon,
+    EnxModule.inasx,
+    EnxModule.freemarket,
+  ];
+  static const _maxModuleButtons = 4;
+
+  final EnxosPalette palette;
+  final EnxModule? selectedModule;
+  final EnxosLauncherCallback? onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      _LauncherItem(
+        label: 'enxOS',
+        abbreviation: 'eos',
+        color: palette.module,
+      ),
+      ..._moduleOrder.take(_maxModuleButtons).map(
+        (module) => _LauncherItem(
+          label: module.title,
+          abbreviation: module.abbreviation,
+          color: Color(module.brandColorValue),
+          module: module,
+        ),
+      ),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+      decoration: BoxDecoration(
+        color: palette.card,
+        border: Border(top: BorderSide(color: palette.border)),
+      ),
+      child: Row(
+        children: [
+          for (final item in items)
+            Expanded(
+              child: _AppLauncherButton(
+                item: item,
+                palette: palette,
+                selected: item.module == selectedModule,
+                onSelect: onSelect,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LauncherItem {
+  const _LauncherItem({
+    required this.label,
+    required this.abbreviation,
+    required this.color,
+    this.module,
+  });
+
+  final String label;
+  final String abbreviation;
+  final Color color;
+  final EnxModule? module;
+}
+
+class _AppLauncherButton extends StatelessWidget {
+  const _AppLauncherButton({
+    required this.item,
+    required this.palette,
+    required this.selected,
+    required this.onSelect,
+  });
+
+  final _LauncherItem item;
+  final EnxosPalette palette;
+  final bool selected;
+  final EnxosLauncherCallback? onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onSelect != null && !selected;
+    final textColor = item.color.computeLuminance() > 0.30
+        ? const Color(0xFF17242A)
+        : Colors.white;
+
+    return Tooltip(
+      message: item.module != null && onSelect == null
+          ? 'Entre no enxOS para abrir este módulo'
+          : item.label,
+      child: Opacity(
+        opacity: item.module != null && onSelect == null ? 0.45 : 1,
+        child: Material(
+          color: selected
+              ? item.color.withValues(alpha: 0.10)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+          child: InkWell(
+            onTap: enabled ? () => onSelect!(item.module) : null,
+            borderRadius: BorderRadius.circular(14),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: item.color,
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: Text(
+                      item.abbreviation,
+                      maxLines: 1,
+                      style: TextStyle(
+                        color: textColor,
+                        fontSize: item.abbreviation.length > 3 ? 9 : 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.4,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    item.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: selected
+                          ? palette.textPrimary
+                          : palette.textSecondary,
+                      fontSize: 10,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

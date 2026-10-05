@@ -35,3 +35,5 @@ enum EnxModule {
   final String id;
   final String description;
 }
+
+typedef EnxosLauncherCallback = Future<void> Function(EnxModule? target);
