@@ -261,7 +261,7 @@ class _Header extends StatelessWidget {
               }
             },
             itemBuilder: (context) {
-              final serviceState = context.watch<ForegroundServiceState>();
+              //final serviceState = context.watch<ForegroundServiceState>();
               return [
                 PopupMenuItem(
                   value: _ShellAction.toggleTheme,
