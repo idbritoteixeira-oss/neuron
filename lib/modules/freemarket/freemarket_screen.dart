@@ -12,5 +12,6 @@ class FreeMarketScreen extends StatelessWidget {
   Widget build(BuildContext context) =>
       ModuleHomeScreen(
         module: EnxModule.freemarket,
+    onLauncherTap: onLauncherTap,
       );
 }

@@ -418,15 +418,21 @@ class _BlockBar extends StatelessWidget {
 }
 
 class ModuleHomeScreen extends StatelessWidget {
-  const ModuleHomeScreen({required this.module, super.key});
+  const ModuleHomeScreen({
+    required this.module,
+    this.onLauncherTap,
+    super.key
+  });
 
   final EnxModule module;
+  final EnxosLauncherCallback? onLauncherTap;
 
   @override
   Widget build(BuildContext context) {
     final palette = EnxosTheme.paletteOf(context);
     return EnxosShell(
       module: module,
+      onLauncherTap: onLauncherTap,  // ← passa aqui
       extraActionLabel: 'Bloquear módulo',
       extraActionIcon: Icons.lock_outline,
       onExtraAction: () {
