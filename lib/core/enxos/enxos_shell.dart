@@ -8,26 +8,7 @@ import 'enx_module.dart';
 import 'enxos_theme.dart';
 import 'enxos_ui_state.dart';
 import 'enxos_watercolor_state.dart';
-
-// Enum para identificar qual app foi tapped
-enum AppLaunchTarget { home, inasx, pigeon, freemarket }
-
-// Model para cada botão da bandeja
-class AppTrayItem {
-  final AppLaunchTarget target;
-  final String label;
-  final Color color;
-  final IconData icon;
-  final bool enabled;
-
-  AppTrayItem({
-    required this.target,
-    required this.label,
-    required this.color,
-    required this.icon,
-    this.enabled = true,
-  });
-}
+import 'foreground_service.dart';
 
 class EnxosShell extends StatelessWidget {
   const EnxosShell({
@@ -37,8 +18,6 @@ class EnxosShell extends StatelessWidget {
     this.extraActionLabel,
     this.extraActionIcon,
     this.onExtraAction,
-    this.onAppLaunched,
-    this.appTrayItems,
     super.key,
   });
 
@@ -48,43 +27,12 @@ class EnxosShell extends StatelessWidget {
   final String? extraActionLabel;
   final IconData? extraActionIcon;
   final VoidCallback? onExtraAction;
-  final Function(AppLaunchTarget)? onAppLaunched;
-  final List<AppTrayItem>? appTrayItems;
 
   @override
   Widget build(BuildContext context) {
     final palette = EnxosTheme.paletteOf(context);
     final uiState = context.watch<EnxosUiState>();
     final watercolor = context.watch<EnxosWatercolorState>();
-
-    // Default app tray items se nenhum for fornecido
-    final trayItems = appTrayItems ??
-        [
-          AppTrayItem(
-            target: AppLaunchTarget.home,
-            label: 'OS',
-            color: palette.module,
-            icon: Icons.home_outlined,
-          ),
-          AppTrayItem(
-            target: AppLaunchTarget.pigeon,
-            label: 'pru',
-            color: const Color(0xFF5AB31E),
-            icon: Icons.send_outlined,
-          ),
-          AppTrayItem(
-            target: AppLaunchTarget.inasx,
-            label: 'inx',
-            color: const Color(0xFF5D5D5D),
-            icon: Icons.hub_outlined,
-          ),
-          AppTrayItem(
-            target: AppLaunchTarget.freemarket,
-            label: 'fre',
-            color: const Color(0xFFB3611E),
-            icon: Icons.storefront_outlined,
-          ),
-        ];
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -143,19 +91,13 @@ class EnxosShell extends StatelessWidget {
                             ),
                             Expanded(
                               child: Padding(
-                                padding: const EdgeInsets.fromLTRB(
-                                  18,
-                                  16,
-                                  18,
-                                  12,
-                                ),
+                                padding: const EdgeInsets.fromLTRB(18, 16, 18, 12),
                                 child: child,
                               ),
                             ),
-                            _AppTray(
+                            _Footer(
                               palette: palette,
-                              items: trayItems,
-                              onItemTapped: onAppLaunched,
+                              watercolor: watercolor,
                             ),
                           ],
                         ),
@@ -172,7 +114,7 @@ class EnxosShell extends StatelessWidget {
   }
 }
 
-class _Header extends StatelessWidget {
+class _Header extends StatefulWidget {
   const _Header({
     required this.palette,
     required this.uiState,
@@ -192,11 +134,50 @@ class _Header extends StatelessWidget {
   final VoidCallback? onExtraAction;
 
   @override
+  State<_Header> createState() => _HeaderState();
+}
+
+class _HeaderState extends State<_Header> {
+  bool _serviceRunning = false;
+  bool _serviceBusy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshServiceState();
+  }
+
+  Future<void> _refreshServiceState() async {
+    final running = await ForegroundServiceController.isRunning;
+    if (mounted) setState(() => _serviceRunning = running);
+  }
+
+  Future<void> _toggleService(bool enabled) async {
+    setState(() => _serviceBusy = true);
+    try {
+      if (enabled) {
+        await ForegroundServiceController.start();
+      } else {
+        await ForegroundServiceController.stop();
+      }
+      await _refreshServiceState();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erro ao alterar serviço.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _serviceBusy = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final currentModule = module;
-    final logoText = currentModule?.abbreviation ?? 'OS';
+    final currentModule = widget.module;
+    final logoText = currentModule?.abbreviation ?? 'eos';
     final logoColor = currentModule == null
-        ? palette.module
+        ? widget.palette.module
         : Color(currentModule.brandColorValue);
     final logoTextColor = logoColor.computeLuminance() > 0.30
         ? const Color(0xFF17242A)
@@ -205,7 +186,7 @@ class _Header extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 10, 20, 10),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: palette.border, width: 2)),
+        border: Border(bottom: BorderSide(color: widget.palette.border, width: 2)),
       ),
       child: Row(
         children: [
@@ -234,7 +215,7 @@ class _Header extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
               style: TextStyle(
-                color: palette.textPrimary,
+                color: widget.palette.textPrimary,
                 fontSize: 29,
                 fontWeight: FontWeight.w700,
                 letterSpacing: -0.8,
@@ -244,73 +225,69 @@ class _Header extends StatelessWidget {
           const Spacer(),
           PopupMenuButton<_ShellAction>(
             tooltip: 'Opções',
-            icon: Icon(Icons.more_vert, color: palette.textPrimary),
+            icon: Icon(Icons.more_vert, color: widget.palette.textPrimary),
             onSelected: (action) {
               switch (action) {
                 case _ShellAction.toggleTheme:
-                  uiState.toggleTheme();
+                  widget.uiState.toggleTheme();
                 case _ShellAction.settings:
                   _showSettings(context);
-                case _ShellAction.serviceToggle:
-                  //final serviceState = context.read<ForegroundServiceState>();
-                  //serviceState.toggle(!serviceState.isRunning);
+                case _ShellAction.toggleService:
+                  _toggleService(!_serviceRunning);
                 case _ShellAction.extra:
-                  onExtraAction?.call();
+                  widget.onExtraAction?.call();
                 case _ShellAction.signOut:
-                  onSignOut?.call();
+                  widget.onSignOut?.call();
               }
             },
-            itemBuilder: (context) {
-              //final serviceState = context.watch<ForegroundServiceState>();
-              return [
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: _ShellAction.toggleTheme,
+                child: _MenuLabel(
+                  icon: widget.uiState.isDark
+                      ? Icons.light_mode_outlined
+                      : Icons.dark_mode_outlined,
+                  text: widget.uiState.isDark ? 'Tema claro' : 'Tema escuro',
+                ),
+              ),
+              const PopupMenuItem(
+                value: _ShellAction.settings,
+                child: _MenuLabel(
+                  icon: Icons.tune_outlined,
+                  text: 'Configurações',
+                ),
+              ),
+              if (ForegroundServiceController.isSupported)
                 PopupMenuItem(
-                  value: _ShellAction.toggleTheme,
+                  value: _ShellAction.toggleService,
                   child: _MenuLabel(
-                    icon: uiState.isDark
-                        ? Icons.light_mode_outlined
-                        : Icons.dark_mode_outlined,
-                    text: uiState.isDark ? 'Tema claro' : 'Tema escuro',
+                    icon: _serviceRunning
+                        ? Icons.notifications_active_outlined
+                        : Icons.notifications_none_outlined,
+                    text: _serviceRunning
+                        ? 'Desativar notificações'
+                        : 'Ativar notificações',
                   ),
                 ),
+              if (widget.onExtraAction != null)
+                PopupMenuItem(
+                  value: _ShellAction.extra,
+                  child: _MenuLabel(
+                    icon: widget.extraActionIcon ?? Icons.more_horiz,
+                    text: widget.extraActionLabel ?? 'Ação do módulo',
+                  ),
+                ),
+              if (widget.onSignOut != null) ...[
+                const PopupMenuDivider(),
                 const PopupMenuItem(
-                  value: _ShellAction.settings,
+                  value: _ShellAction.signOut,
                   child: _MenuLabel(
-                    icon: Icons.tune_outlined,
-                    text: 'Configurações',
+                    icon: Icons.logout,
+                    text: 'Sair do enxOS',
                   ),
                 ),
-                if (serviceState.isSupported)
-                  PopupMenuItem(
-                    value: _ShellAction.serviceToggle,
-                    child: _MenuLabel(
-                      icon: serviceState.isRunning
-                          ? Icons.notifications_active_outlined
-                          : Icons.notifications_none_outlined,
-                      text: serviceState.isRunning
-                          ? 'Desativar notificações'
-                          : 'Ativar notificações',
-                    ),
-                  ),
-                if (onExtraAction != null)
-                  PopupMenuItem(
-                    value: _ShellAction.extra,
-                    child: _MenuLabel(
-                      icon: extraActionIcon ?? Icons.more_horiz,
-                      text: extraActionLabel ?? 'Ação do módulo',
-                    ),
-                  ),
-                if (onSignOut != null) ...[
-                  const PopupMenuDivider(),
-                  const PopupMenuItem(
-                    value: _ShellAction.signOut,
-                    child: _MenuLabel(
-                      icon: Icons.logout,
-                      text: 'Sair do enxOS',
-                    ),
-                  ),
-                ],
-              ];
-            },
+              ],
+            ],
           ),
         ],
       ),
@@ -344,83 +321,35 @@ class _MenuLabel extends StatelessWidget {
   }
 }
 
-class _AppTray extends StatelessWidget {
-  const _AppTray({
-    required this.palette,
-    required this.items,
-    required this.onItemTapped,
-  });
+class _Footer extends StatelessWidget {
+  const _Footer({required this.palette, required this.watercolor});
 
   final EnxosPalette palette;
-  final List<AppTrayItem> items;
-  final Function(AppLaunchTarget)? onItemTapped;
+  final EnxosWatercolorState watercolor;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+      padding: const EdgeInsets.fromLTRB(18, 9, 18, 10),
       decoration: BoxDecoration(
         border: Border(top: BorderSide(color: palette.border)),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: items.map((item) {
-          return Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: _AppTrayButton(
-                item: item,
-                onTap: item.enabled
-                    ? () => onItemTapped?.call(item.target)
-                    : null,
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-}
-
-class _AppTrayButton extends StatelessWidget {
-  const _AppTrayButton({
-    required this.item,
-    required this.onTap,
-  });
-
-  final AppTrayItem item;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final textColor = item.color.computeLuminance() > 0.30
-        ? const Color(0xFF17242A)
-        : Colors.white;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Opacity(
-          opacity: item.enabled ? 1.0 : 0.5,
-          child: Container(
-            decoration: BoxDecoration(
-              color: item.color,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Center(
-              child: Text(
-                item.label,
-                style: TextStyle(
-                  color: textColor,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                  letterSpacing: -0.3,
-                ),
-              ),
-            ),
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: Text(
+          watercolor.sourceValue == null
+              ? '{/enxOS${watercolor.isConnected ? '...' : 'offline'}}'
+              : '{/enxOS${watercolor.sourceValue}}',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.right,
+          style: TextStyle(
+            color: palette.textMuted,
+            fontSize: 9,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+            fontFamily: 'monospace',
           ),
         ),
       ),
@@ -499,4 +428,4 @@ class _AppearanceDialog extends StatelessWidget {
   }
 }
 
-enum _ShellAction { toggleTheme, settings, serviceToggle, extra, signOut }
+enum _ShellAction { toggleTheme, settings, toggleService, extra, signOut }
