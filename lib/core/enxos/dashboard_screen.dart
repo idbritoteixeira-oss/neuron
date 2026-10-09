@@ -458,13 +458,12 @@ class _ModuleHomeScreenState extends State<ModuleHomeScreen> {
   Future<void> _validatePin() async {
     setState(() => _isLoading = true);
 
-    // TODO: Aqui entra a chamada real para a base dll_ide via API
     // Simulando tempo de processamento criptográfico:
     await Future.delayed(const Duration(milliseconds: 800));
 
     // Desbloqueia o módulo no estado global
     if (mounted) {
-      context.read<ModuleState>().unlock(widget.module);
+      context.read<ModuleState>().unlock(); // Correção: 0 argumentos
       
       // Limpa os dados do teclado após sucesso
       setState(() {
@@ -491,7 +490,7 @@ class _ModuleHomeScreenState extends State<ModuleHomeScreen> {
       extraActionLabel: 'Bloquear módulo',
       extraActionIcon: Icons.lock_outline,
       onExtraAction: () {
-        context.read<ModuleState>().lock(widget.module);
+        context.read<ModuleState>().lock(); // Correção: 0 argumentos
       },
       child: Center(
         child: SingleChildScrollView(
@@ -638,7 +637,6 @@ class _ModuleHomeScreenState extends State<ModuleHomeScreen> {
     );
   }
 
-  // TIPAGEM CORRIGIDA PARA Evitar erro de "dynamic"
   Widget _buildNumpadButton(String number, EnxosPalette palette) {
     return InkWell(
       onTap: () => _onKeyPressed(number),
@@ -646,7 +644,7 @@ class _ModuleHomeScreenState extends State<ModuleHomeScreen> {
       child: Container(
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: palette.surface,
+          color: palette.card, // Correção: card ao invés de surface
         ),
         alignment: Alignment.center,
         child: Text(
