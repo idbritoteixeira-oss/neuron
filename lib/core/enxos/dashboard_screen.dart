@@ -413,61 +413,202 @@ class _BlockBar extends StatelessWidget {
   }
 }
 
-class ModuleHomeScreen extends StatelessWidget {
+class ModuleHomeScreen extends StatefulWidget {
   const ModuleHomeScreen({
     required this.module,
     this.onLauncherTap,
-    super.key
+    super.key,
   });
 
   final EnxModule module;
   final EnxosLauncherCallback? onLauncherTap;
 
   @override
+  State<ModuleHomeScreen> createState() => _ModuleHomeScreenState();
+}
+
+class _ModuleHomeScreenState extends State<ModuleHomeScreen> {
+  String _pin = '';
+  bool _isLoading = false;
+
+  void _onKeyPressed(String value) {
+    if (_pin.length < 6 && !_isLoading) {
+      setState(() {
+        _pin += value;
+      });
+      
+      // Quando atingir 6 dígitos, dispara a validação
+      if (_pin.length == 6) {
+        _validatePin();
+      }
+    }
+  }
+
+  void _onBackspace() {
+    if (_pin.isNotEmpty && !_isLoading) {
+      setState(() {
+        _pin = _pin.substring(0, _pin.length - 1);
+      });
+    }
+  }
+
+  Future<void> _validatePin() async {
+    setState(() => _isLoading = true);
+
+    // TODO: Integre aqui a sua chamada de validação do banco (dll_ide)
+    // Exemplo: final success = await context.read<ModuleState>().authenticate(widget.module, _pin);
+    
+    // Simulando tempo de processamento de rede/criptografia
+    await Future.delayed(const Duration(milliseconds: 800));
+
+    // Se falhar, limpe o PIN para o usuário tentar novamente
+    setState(() {
+      _pin = '';
+      _isLoading = false;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final palette = EnxosTheme.paletteOf(context);
+
     return EnxosShell(
-      module: module,
-      onLauncherTap: onLauncherTap,  // ← passa aqui
-      extraActionLabel: 'Bloquear módulo',
-      extraActionIcon: Icons.lock_outline,
+      module: widget.module,
+      onLauncherTap: widget.onLauncherTap,
+      // Como esta é a tela de bloqueio, talvez a ação extra não seja "Bloquear módulo"
+      extraActionLabel: 'Cancelar acesso',
+      extraActionIcon: Icons.close,
       onExtraAction: () {
-        context.read<ModuleState>().lock(module);
         Navigator.of(context).pop();
       },
       child: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                Icons.verified_user_outlined,
-                size: 50,
+                Icons.lock_outline,
+                size: 40,
                 color: palette.module,
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 16),
               Text(
-                '${module.title} desbloqueado',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                'Autenticação Necessária',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: palette.textPrimary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
+              // Mantido o ID exatamente como solicitado
               Text(
-                'Sessão isolada • ${module.id}',
-                style: TextStyle(color: palette.textSecondary),
+                'Sessão isolada • ${widget.module.id}',
+                style: TextStyle(color: palette.textSecondary, fontSize: 12),
               ),
-              const SizedBox(height: 18),
-              Text(
-                'Tela-base do módulo. Conecte aqui os recursos específicos do produto.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: palette.textMuted, height: 1.5),
+              const SizedBox(height: 32),
+
+              // Indicadores do PIN (6 pontinhos)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(6, (index) {
+                  final isFilled = index < _pin.length;
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    width: 14,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isFilled ? palette.module : Colors.transparent,
+                      border: Border.all(
+                        color: isFilled ? palette.module : palette.textMuted,
+                        width: 2,
+                      ),
+                    ),
+                  );
+                }),
+              ),
+              
+              const SizedBox(height: 24),
+              
+              // Loading opcional durante a validação
+              SizedBox(
+                height: 24,
+                child: _isLoading 
+                    ? SizedBox(
+                        width: 24, 
+                        height: 24, 
+                        child: CircularProgressIndicator(color: palette.module, strokeWidth: 2)
+                      ) 
+                    : const SizedBox.shrink(),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Teclado Numérico
+              SizedBox(
+                width: 260,
+                child: GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: 3,
+                  childAspectRatio: 1.2,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  children: [
+                    _buildNumpadButton('1', palette),
+                    _buildNumpadButton('2', palette),
+                    _buildNumpadButton('3', palette),
+                    _buildNumpadButton('4', palette),
+                    _buildNumpadButton('5', palette),
+                    _buildNumpadButton('6', palette),
+                    _buildNumpadButton('7', palette),
+                    _buildNumpadButton('8', palette),
+                    _buildNumpadButton('9', palette),
+                    const SizedBox.shrink(), // Espaço vazio no canto inferior esquerdo
+                    _buildNumpadButton('0', palette),
+                    _buildBackspaceButton(palette),
+                  ],
+                ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNumpadButton(String number, dynamic palette) {
+    return InkWell(
+      onTap: () => _onKeyPressed(number),
+      borderRadius: BorderRadius.circular(40),
+      child: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: palette.surface, // Fundo leve para o botão do teclado
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          number,
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            color: palette.textPrimary,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBackspaceButton(dynamic palette) {
+    return InkWell(
+      onTap: _onBackspace,
+      borderRadius: BorderRadius.circular(40),
+      child: Container(
+        alignment: Alignment.center,
+        child: Icon(
+          Icons.backspace_outlined,
+          color: palette.textSecondary,
         ),
       ),
     );
