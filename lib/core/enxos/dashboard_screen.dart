@@ -455,7 +455,7 @@ class _ModuleHomeScreenState extends State<ModuleHomeScreen> {
     }
   }
 
-  Future<void> _validatePin() async {
+    Future<void> _validatePin() async {
     setState(() => _isLoading = true);
 
     // Simulando tempo de processamento criptográfico:
@@ -463,7 +463,8 @@ class _ModuleHomeScreenState extends State<ModuleHomeScreen> {
 
     // Desbloqueia o módulo no estado global
     if (mounted) {
-      context.read<ModuleState>().unlock(); // Correção: 0 argumentos
+      // Correção: unlock exige parâmetro nomeado
+      context.read<ModuleState>().unlock(module: widget.module); 
       
       // Limpa os dados do teclado após sucesso
       setState(() {
@@ -472,6 +473,7 @@ class _ModuleHomeScreenState extends State<ModuleHomeScreen> {
       });
     }
   }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -490,7 +492,8 @@ class _ModuleHomeScreenState extends State<ModuleHomeScreen> {
       extraActionLabel: 'Bloquear módulo',
       extraActionIcon: Icons.lock_outline,
       onExtraAction: () {
-        context.read<ModuleState>().lock(); // Correção: 0 argumentos
+        // Correção: lock exige parâmetro posicional
+        context.read<ModuleState>().lock(widget.module); 
       },
       child: Center(
         child: SingleChildScrollView(
@@ -529,6 +532,7 @@ class _ModuleHomeScreenState extends State<ModuleHomeScreen> {
       ),
     );
   }
+
 
   // TELA 2: ESTADO BLOQUEADO (TECLADO NUMÉRICO - PIN DE 6 DÍGITOS)
   Widget _buildLockedView(BuildContext context) {
