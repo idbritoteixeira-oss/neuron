@@ -12,7 +12,9 @@ import '../../modules/freemarket/freemarket_screen.dart';
 import '../../modules/inasx/inasx_screen.dart';
 import '../../modules/pigeon/pigeon_screen.dart';
 
-// Models
+// ==========================================
+// MODELS
+// ==========================================
 class NewsPost {
   final String id;
   final String imageUrl;
@@ -48,6 +50,9 @@ class BlockEntry {
   }
 }
 
+// ==========================================
+// DASHBOARD SCREEN
+// ==========================================
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -157,14 +162,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     context.read<AuthState>().signOut();
   }
 
- Future<void> _handleLauncherTap(EnxModule? module) async {
-  if (module == null) {
-    // Home (enxOS) — volta pro dashboard
-    Navigator.of(context).popUntil((route) => route.isFirst);
-    return;
+  Future<void> _handleLauncherTap(EnxModule? module) async {
+    if (module == null) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      return;
+    }
+    await _openModule(module);
   }
-  await _openModule(module);
- }
 
   @override
   Widget build(BuildContext context) {
@@ -177,7 +181,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(2, 4, 2, 20),
         children: [
-          // Saudação
           Text(
             'Olá, ${auth.publicId ?? 'usuário'}',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -187,7 +190,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 8),
 
-          // #news Carousel
           Text(
             '#news',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -214,7 +216,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          // Indicadores
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(
@@ -234,7 +235,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 26),
 
-          // Últimos blocos
           Text(
             'Últimos blocos',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -413,6 +413,9 @@ class _BlockBar extends StatelessWidget {
   }
 }
 
+// ==========================================
+// MODULE HOME SCREEN (LOCK / UNLOCK STATES)
+// ==========================================
 class ModuleHomeScreen extends StatefulWidget {
   const ModuleHomeScreen({
     required this.module,
@@ -437,7 +440,7 @@ class _ModuleHomeScreenState extends State<ModuleHomeScreen> {
         _pin += value;
       });
       
-      // Quando atingir 6 dígitos, dispara a validação
+      // Dispara a validação no 6º dígito inserido
       if (_pin.length == 6) {
         _validatePin();
       }
@@ -455,28 +458,86 @@ class _ModuleHomeScreenState extends State<ModuleHomeScreen> {
   Future<void> _validatePin() async {
     setState(() => _isLoading = true);
 
-    // TODO: Integre aqui a sua chamada de validação do banco (dll_ide)
-    // Exemplo: final success = await context.read<ModuleState>().authenticate(widget.module, _pin);
-    
-    // Simulando tempo de processamento de rede/criptografia
+    // TODO: Aqui entra a chamada real para a base dll_ide via API
+    // Simulando tempo de processamento criptográfico:
     await Future.delayed(const Duration(milliseconds: 800));
 
-    // Se falhar, limpe o PIN para o usuário tentar novamente
-    setState(() {
-      _pin = '';
-      _isLoading = false;
-    });
+    // Desbloqueia o módulo no estado global
+    if (mounted) {
+      context.read<ModuleState>().unlock(widget.module);
+      
+      // Limpa os dados do teclado após sucesso
+      setState(() {
+        _pin = '';
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final palette = EnxosTheme.paletteOf(context);
+    // Escuta ativamente o estado do módulo
+    final isUnlocked = context.watch<ModuleState>().isUnlocked(widget.module);
 
+    return isUnlocked ? _buildUnlockedView(context) : _buildLockedView(context);
+  }
+
+  // TELA 1: ESTADO DESBLOQUEADO (CONTEÚDO DO MÓDULO)
+  Widget _buildUnlockedView(BuildContext context) {
+    final palette = EnxosTheme.paletteOf(context);
     return EnxosShell(
       module: widget.module,
       onLauncherTap: widget.onLauncherTap,
-      // Como esta é a tela de bloqueio, talvez a ação extra não seja "Bloquear módulo"
-      extraActionLabel: 'Cancelar acesso',
+      extraActionLabel: 'Bloquear módulo',
+      extraActionIcon: Icons.lock_outline,
+      onExtraAction: () {
+        context.read<ModuleState>().lock(widget.module);
+      },
+      child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.verified_user_outlined,
+                size: 50,
+                color: palette.module,
+              ),
+              const SizedBox(height: 18),
+              Text(
+                '${widget.module.title} desbloqueado',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: palette.textPrimary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Sessão isolada • ${widget.module.id}',
+                style: TextStyle(color: palette.textSecondary),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                'Tela-base do módulo. Conecte aqui os recursos específicos do produto.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: palette.textMuted, height: 1.5),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // TELA 2: ESTADO BLOQUEADO (TECLADO NUMÉRICO - PIN DE 6 DÍGITOS)
+  Widget _buildLockedView(BuildContext context) {
+    final palette = EnxosTheme.paletteOf(context);
+    return EnxosShell(
+      module: widget.module,
+      onLauncherTap: widget.onLauncherTap,
+      extraActionLabel: 'Sair do módulo',
       extraActionIcon: Icons.close,
       onExtraAction: () {
         Navigator.of(context).pop();
@@ -501,14 +562,13 @@ class _ModuleHomeScreenState extends State<ModuleHomeScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              // Mantido o ID exatamente como solicitado
               Text(
                 'Sessão isolada • ${widget.module.id}',
                 style: TextStyle(color: palette.textSecondary, fontSize: 12),
               ),
               const SizedBox(height: 32),
 
-              // Indicadores do PIN (6 pontinhos)
+              // Indicadores do PIN (6 pontos)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(6, (index) {
@@ -531,7 +591,7 @@ class _ModuleHomeScreenState extends State<ModuleHomeScreen> {
               
               const SizedBox(height: 24),
               
-              // Loading opcional durante a validação
+              // Loading opcional
               SizedBox(
                 height: 24,
                 child: _isLoading 
@@ -565,7 +625,7 @@ class _ModuleHomeScreenState extends State<ModuleHomeScreen> {
                     _buildNumpadButton('7', palette),
                     _buildNumpadButton('8', palette),
                     _buildNumpadButton('9', palette),
-                    const SizedBox.shrink(), // Espaço vazio no canto inferior esquerdo
+                    const SizedBox.shrink(), // Espaço vazio à esquerda do zero
                     _buildNumpadButton('0', palette),
                     _buildBackspaceButton(palette),
                   ],
@@ -578,14 +638,15 @@ class _ModuleHomeScreenState extends State<ModuleHomeScreen> {
     );
   }
 
-  Widget _buildNumpadButton(String number, dynamic palette) {
+  // TIPAGEM CORRIGIDA PARA Evitar erro de "dynamic"
+  Widget _buildNumpadButton(String number, EnxosPalette palette) {
     return InkWell(
       onTap: () => _onKeyPressed(number),
       borderRadius: BorderRadius.circular(40),
       child: Container(
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: palette.surface, // Fundo leve para o botão do teclado
+          color: palette.surface,
         ),
         alignment: Alignment.center,
         child: Text(
@@ -600,7 +661,7 @@ class _ModuleHomeScreenState extends State<ModuleHomeScreen> {
     );
   }
 
-  Widget _buildBackspaceButton(dynamic palette) {
+  Widget _buildBackspaceButton(EnxosPalette palette) {
     return InkWell(
       onTap: _onBackspace,
       borderRadius: BorderRadius.circular(40),
