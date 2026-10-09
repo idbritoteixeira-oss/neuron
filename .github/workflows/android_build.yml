@@ -26,6 +26,9 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Generate native platform files
+        run: flutter create --platforms=android,ios .
+
       - name: Install dependencies
         run: flutter pub get
 
@@ -40,3 +43,4 @@ jobs:
         with:
           name: enxos-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+          
