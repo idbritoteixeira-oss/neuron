@@ -13,7 +13,18 @@ dependencies:
   http: ^1.6.0
   provider: ^6.1.5+1
   shared_preferences: ^2.5.5
+  
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_launcher_icons: ^0.13.1
 
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: false
+  image_path: "lib/core/assets/logo.png"
+  min_sdk_android: 21
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
