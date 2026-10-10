@@ -215,6 +215,7 @@ class _ModuleUnlockDialogState extends State<ModuleUnlockDialog>
       ),
     );
   }
+}
 
 class _NumPad extends StatelessWidget {
   const _NumPad({
