@@ -244,7 +244,7 @@ class _NumPad extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: row.map((key) {
-              if (key == -1) return const SizedBox(width: 72, height: 56);
+              if (key == -1) return const SizedBox(width: 92, height: 56);
               if (key == -2) {
                 return _NumKey(
                   palette: palette,
@@ -290,7 +290,8 @@ class _NumKey extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+
       child: Material(
         color: palette.border.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(14),
@@ -298,7 +299,7 @@ class _NumKey extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           onTap: onTap,
           child: SizedBox(
-            width: 72,
+            width: 80,
             height: 56,
             child: Center(child: child),
           ),
