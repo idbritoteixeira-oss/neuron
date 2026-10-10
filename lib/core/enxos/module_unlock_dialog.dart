@@ -91,134 +91,130 @@ class _ModuleUnlockDialogState extends State<ModuleUnlockDialog>
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
-      child: Container(
-        decoration: BoxDecoration(
-          color: palette.modal,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: palette.border),
-        ),
-        padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Ícone
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: palette.module.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Icon(
-                Icons.lock_outline_rounded,
-                color: palette.module,
-                size: 28,
-              ),
+      insetPadding: EdgeInsets.zero,
+      alignment: Alignment.center,
+      child: Center(
+        child: SizedBox(
+          width: 320,
+          child: Container(
+            decoration: BoxDecoration(
+              color: palette.modal,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: palette.border),
             ),
-            const SizedBox(height: 14),
-
-            // Título e ID do módulo
-            Text(
-              widget.module.title,
-              style: TextStyle(
-                color: palette.textPrimary,
-                fontWeight: FontWeight.w700,
-                fontSize: 17,
-              ),
+            padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Ícone
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: palette.module.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(
+                    Icons.lock_outline_rounded,
+                    color: palette.module,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  widget.module.title,
+                  style: TextStyle(
+                    color: palette.textPrimary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 17,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  widget.module.id,
+                  style: TextStyle(
+                    color: palette.textMuted,
+                    fontSize: 12,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+                const SizedBox(height: 24),
+                AnimatedBuilder(
+                  animation: _shakeAnimation,
+                  builder: (context, child) {
+                    final offset = _error
+                        ? 8 * (0.5 - (_shakeAnimation.value % 1).abs())
+                        : 0.0;
+                    return Transform.translate(
+                      offset: Offset(offset * 6, 0),
+                      child: child,
+                    );
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(6, (i) {
+                      final filled = i < _digits.length;
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        margin: const EdgeInsets.symmetric(horizontal: 8),
+                        width: 14,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _error
+                              ? Colors.redAccent
+                              : filled
+                                  ? palette.module
+                                  : Colors.transparent,
+                          border: Border.all(
+                            color: _error
+                                ? Colors.redAccent
+                                : filled
+                                    ? palette.module
+                                    : palette.textMuted.withValues(alpha: 0.4),
+                            width: 2,
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                AnimatedOpacity(
+                  opacity: _error ? 1 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Text(
+                    context.watch<ModuleState>().error ?? 'PIN incorreto',
+                    style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                if (_loading)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: CircularProgressIndicator(color: palette.module),
+                  )
+                else
+                  _NumPad(
+                    palette: palette,
+                    onDigit: _onDigit,
+                    onDelete: _onDelete,
+                  ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text(
+                    'Cancelar',
+                    style: TextStyle(color: palette.textMuted),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              widget.module.id,
-              style: TextStyle(
-                color: palette.textMuted,
-                fontSize: 12,
-                fontFamily: 'monospace',
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Display PIN com shake
-            AnimatedBuilder(
-              animation: _shakeAnimation,
-              builder: (context, child) {
-                final offset = _error
-                    ? 8 * (0.5 - (_shakeAnimation.value % 1).abs())
-                    : 0.0;
-                return Transform.translate(
-                  offset: Offset(offset * 6, 0),
-                  child: child,
-                );
-              },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(6, (i) {
-                  final filled = i < _digits.length;
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    margin: const EdgeInsets.symmetric(horizontal: 8),
-                    width: 14,
-                    height: 14,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: _error
-                          ? Colors.redAccent
-                          : filled
-                              ? palette.module
-                              : Colors.transparent,
-                      border: Border.all(
-                        color: _error
-                            ? Colors.redAccent
-                            : filled
-                                ? palette.module
-                                : palette.textMuted.withValues(alpha: 0.4),
-                        width: 2,
-                      ),
-                    ),
-                  );
-                }),
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            // Mensagem de erro
-            AnimatedOpacity(
-              opacity: _error ? 1 : 0,
-              duration: const Duration(milliseconds: 200),
-              child: Text(
-                context.watch<ModuleState>().error ?? 'PIN incorreto',
-                style: const TextStyle(color: Colors.redAccent, fontSize: 12),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Teclado
-            if (_loading)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 24),
-                child: CircularProgressIndicator(color: palette.module),
-              )
-            else
-              _NumPad(
-                palette: palette,
-                onDigit: _onDigit,
-                onDelete: _onDelete,
-              ),
-
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(
-                'Cancelar',
-                style: TextStyle(color: palette.textMuted),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
-}
 
 class _NumPad extends StatelessWidget {
   const _NumPad({
