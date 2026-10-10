@@ -191,7 +191,7 @@ class _HeaderState extends State<_Header> {
         : Colors.white;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(18, 10, 20, 10),
+      padding: const EdgeInsets.fromLTRB(18, 10, 4, 10),
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: widget.palette.border, width: 2)),
       ),
