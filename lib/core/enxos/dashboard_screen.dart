@@ -12,9 +12,7 @@ import '../../modules/freemarket/freemarket_screen.dart';
 import '../../modules/inasx/inasx_screen.dart';
 import '../../modules/pigeon/pigeon_screen.dart';
 
-// ==========================================
-// MODELS
-// ==========================================
+// Models
 class NewsPost {
   final String id;
   final String imageUrl;
@@ -50,9 +48,6 @@ class BlockEntry {
   }
 }
 
-// ==========================================
-// DASHBOARD SCREEN
-// ==========================================
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -162,13 +157,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     context.read<AuthState>().signOut();
   }
 
-  Future<void> _handleLauncherTap(EnxModule? module) async {
-    if (module == null) {
-      Navigator.of(context).popUntil((route) => route.isFirst);
-      return;
-    }
-    await _openModule(module);
+ Future<void> _handleLauncherTap(EnxModule? module) async {
+  if (module == null) {
+    // Home (enxOS) — volta pro dashboard
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    return;
   }
+  await _openModule(module);
+ }
 
   @override
   Widget build(BuildContext context) {
@@ -181,6 +177,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(2, 4, 2, 20),
         children: [
+          // Saudação
           Text(
             'Olá, ${auth.publicId ?? 'usuário'}',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -190,6 +187,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 8),
 
+          // #news Carousel
           Text(
             '#news',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -216,6 +214,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           const SizedBox(height: 12),
+          // Indicadores
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(
@@ -235,6 +234,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 26),
 
+          // Últimos blocos
           Text(
             'Últimos blocos',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -412,88 +412,27 @@ class _BlockBar extends StatelessWidget {
     );
   }
 }
-
-// ==========================================
-// MODULE HOME SCREEN (LOCK / UNLOCK STATES)
-// ==========================================
-class ModuleHomeScreen extends StatefulWidget {
+class ModuleHomeScreen extends StatelessWidget {
   const ModuleHomeScreen({
     required this.module,
     this.onLauncherTap,
-    super.key,
+    super.key
   });
 
   final EnxModule module;
   final EnxosLauncherCallback? onLauncherTap;
 
   @override
-  State<ModuleHomeScreen> createState() => _ModuleHomeScreenState();
-}
-
-class _ModuleHomeScreenState extends State<ModuleHomeScreen> {
-  String _pin = '';
-  bool _isLoading = false;
-
-  void _onKeyPressed(String value) {
-    if (_pin.length < 6 && !_isLoading) {
-      setState(() {
-        _pin += value;
-      });
-      
-      // Dispara a validação no 6º dígito inserido
-      if (_pin.length == 6) {
-        _validatePin();
-      }
-    }
-  }
-
-  void _onBackspace() {
-    if (_pin.isNotEmpty && !_isLoading) {
-      setState(() {
-        _pin = _pin.substring(0, _pin.length - 1);
-      });
-    }
-  }
-
-    Future<void> _validatePin() async {
-    setState(() => _isLoading = true);
-
-    // Simulando tempo de processamento criptográfico:
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    // Desbloqueia o módulo no estado global
-    if (mounted) {
-      // Correção: unlock exige parâmetro nomeado
-      context.read<ModuleState>().unlock(module: widget.module); 
-      
-      // Limpa os dados do teclado após sucesso
-      setState(() {
-        _pin = '';
-        _isLoading = false;
-      });
-    }
-  }
-  
-
-  @override
   Widget build(BuildContext context) {
-    // Escuta ativamente o estado do módulo
-    final isUnlocked = context.watch<ModuleState>().isUnlocked(widget.module);
-
-    return isUnlocked ? _buildUnlockedView(context) : _buildLockedView(context);
-  }
-
-  // TELA 1: ESTADO DESBLOQUEADO (CONTEÚDO DO MÓDULO)
-  Widget _buildUnlockedView(BuildContext context) {
     final palette = EnxosTheme.paletteOf(context);
     return EnxosShell(
-      module: widget.module,
-      onLauncherTap: widget.onLauncherTap,
+      module: module,
+      onLauncherTap: onLauncherTap,  // ← passa aqui
       extraActionLabel: 'Bloquear módulo',
       extraActionIcon: Icons.lock_outline,
       onExtraAction: () {
-        // Correção: lock exige parâmetro posicional
-        context.read<ModuleState>().lock(widget.module); 
+        context.read<ModuleState>().lock(module);
+        Navigator.of(context).pop();
       },
       child: Center(
         child: SingleChildScrollView(
@@ -508,7 +447,7 @@ class _ModuleHomeScreenState extends State<ModuleHomeScreen> {
               ),
               const SizedBox(height: 18),
               Text(
-                '${widget.module.title} desbloqueado',
+                '${module.title} desbloqueado',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: palette.textPrimary,
@@ -517,7 +456,7 @@ class _ModuleHomeScreenState extends State<ModuleHomeScreen> {
               ),
               const SizedBox(height: 10),
               Text(
-                'Sessão isolada • ${widget.module.id}',
+                'Sessão isolada • ${module.id}',
                 style: TextStyle(color: palette.textSecondary),
               ),
               const SizedBox(height: 18),
@@ -528,150 +467,6 @@ class _ModuleHomeScreenState extends State<ModuleHomeScreen> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-
-  // TELA 2: ESTADO BLOQUEADO (TECLADO NUMÉRICO - PIN DE 6 DÍGITOS)
-  Widget _buildLockedView(BuildContext context) {
-    final palette = EnxosTheme.paletteOf(context);
-    return EnxosShell(
-      module: widget.module,
-      onLauncherTap: widget.onLauncherTap,
-      extraActionLabel: 'Sair do módulo',
-      extraActionIcon: Icons.close,
-      onExtraAction: () {
-        Navigator.of(context).pop();
-      },
-      child: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.lock_outline,
-                size: 40,
-                color: palette.module,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Autenticação Necessária',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: palette.textPrimary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Sessão isolada • ${widget.module.id}',
-                style: TextStyle(color: palette.textSecondary, fontSize: 12),
-              ),
-              const SizedBox(height: 32),
-
-              // Indicadores do PIN (6 pontos)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(6, (index) {
-                  final isFilled = index < _pin.length;
-                  return Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 8),
-                    width: 14,
-                    height: 14,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isFilled ? palette.module : Colors.transparent,
-                      border: Border.all(
-                        color: isFilled ? palette.module : palette.textMuted,
-                        width: 2,
-                      ),
-                    ),
-                  );
-                }),
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Loading opcional
-              SizedBox(
-                height: 24,
-                child: _isLoading 
-                    ? SizedBox(
-                        width: 24, 
-                        height: 24, 
-                        child: CircularProgressIndicator(color: palette.module, strokeWidth: 2)
-                      ) 
-                    : const SizedBox.shrink(),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Teclado Numérico
-              SizedBox(
-                width: 260,
-                child: GridView.count(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: 3,
-                  childAspectRatio: 1.2,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  children: [
-                    _buildNumpadButton('1', palette),
-                    _buildNumpadButton('2', palette),
-                    _buildNumpadButton('3', palette),
-                    _buildNumpadButton('4', palette),
-                    _buildNumpadButton('5', palette),
-                    _buildNumpadButton('6', palette),
-                    _buildNumpadButton('7', palette),
-                    _buildNumpadButton('8', palette),
-                    _buildNumpadButton('9', palette),
-                    const SizedBox.shrink(), // Espaço vazio à esquerda do zero
-                    _buildNumpadButton('0', palette),
-                    _buildBackspaceButton(palette),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNumpadButton(String number, EnxosPalette palette) {
-    return InkWell(
-      onTap: () => _onKeyPressed(number),
-      borderRadius: BorderRadius.circular(40),
-      child: Container(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: palette.card, // Correção: card ao invés de surface
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          number,
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w600,
-            color: palette.textPrimary,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBackspaceButton(EnxosPalette palette) {
-    return InkWell(
-      onTap: _onBackspace,
-      borderRadius: BorderRadius.circular(40),
-      child: Container(
-        alignment: Alignment.center,
-        child: Icon(
-          Icons.backspace_outlined,
-          color: palette.textSecondary,
         ),
       ),
     );
