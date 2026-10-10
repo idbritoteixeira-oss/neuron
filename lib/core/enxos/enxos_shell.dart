@@ -3,8 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'enxos_grid_painter.dart';
 import 'enx_module.dart';
+import 'enxos_grid_painter.dart';
 import 'enxos_theme.dart';
 import 'enxos_ui_state.dart';
 import 'enxos_watercolor_state.dart';
@@ -97,12 +97,12 @@ class EnxosShell extends StatelessWidget {
                                 child: child,
                               ),
                             ),
-                                  _AppLauncher(
+                            _AppLauncher(
                               palette: palette,
                               selectedModule: module,
                               onSelect: onLauncherTap,
                             ),
-_Footer(
+                            _Footer(
                               palette: palette,
                               watercolor: watercolor,
                             ),
@@ -191,7 +191,8 @@ class _HeaderState extends State<_Header> {
         : Colors.white;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(18, 10, 4, 10),
+      // Padding esquerdo reduzido para colar mais na lateral
+      padding: const EdgeInsets.fromLTRB(4, 10, 4, 10),
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: widget.palette.border, width: 2)),
       ),
