@@ -93,7 +93,7 @@ class EnxosShell extends StatelessWidget {
                             ),
                             Expanded(
                               child: Padding(
-                                padding: const EdgeInsets.fromLTRB(18, 16, 18, 12),
+                                padding: const EdgeInsets.fromLTRB(18, 16, 4, 12),
                                 child: child,
                               ),
                             ),
