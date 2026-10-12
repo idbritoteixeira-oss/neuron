@@ -18,14 +18,57 @@ class _PigeonScreenState extends State<PigeonScreen>
   int _tabIndex = 0;
   late TabController _tabController;
 
+  // Estado para controlar se estamos dentro de um chat ativo
+  Map<String, dynamic>? _activeChat;
+
   static const _primary = Color(0xFF5AB31E);
 
   final List<Map<String, dynamic>> _mockChats = [
-    {'name': 'Alice', 'msg': 'Oi, tudo bem?', 'time': '10:32', 'unread': 2},
-    {'name': 'Bob', 'msg': 'Viu o feed?', 'time': '09:15', 'unread': 0},
-    {'name': 'Carol', 'msg': 'Pode falar agora?', 'time': 'Ontem', 'unread': 1},
-    {'name': 'Dave', 'msg': 'Ok!', 'time': 'Ontem', 'unread': 0},
-    {'name': 'Eve', 'msg': 'Enviou uma imagem', 'time': 'Seg', 'unread': 0},
+    {
+      'name': 'Alice',
+      'id': 'pru_882910',
+      'msg': 'Oi, tudo bem?',
+      'time': '10:32',
+      'unread': 2,
+      'verified': true, // Selo azul (verificado)
+      'verifiedColor': Colors.blue,
+    },
+    {
+      'name': 'Bob',
+      'id': 'pru_441029',
+      'msg': 'Viu o feed?',
+      'time': '09:15',
+      'unread': 0,
+      'verified': true, // Selo cinza (reservado pelo sistema)
+      'verifiedColor': Colors.grey,
+    },
+    {
+      'name': 'Carol',
+      'id': 'pru_992104',
+      'msg': 'Pode falar agora?',
+      'time': 'Ontem',
+      'unread': 1,
+      'verified': false,
+      'verifiedColor': null,
+    },
+    {
+      'name': 'Dave',
+      'id': 'pru_112344',
+      'msg': 'Ok!',
+      'time': 'Ontem',
+      'unread': 0,
+      'verified': false,
+      'verifiedColor': null,
+    },
+    {
+      'name': 'Eve',
+      'id': 'pru_556789',
+      'msg': 'Enviou uma imagem',
+      'time': 'Seg',
+      'unread': 0,
+      'verified': true,
+      'verifiedColor': Colors.blue,
+    },
   ];
 
   @override
@@ -33,6 +76,7 @@ class _PigeonScreenState extends State<PigeonScreen>
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
     _tabController.addListener(() {
+      if (!mounted) return;
       setState(() => _tabIndex = _tabController.index);
     });
   }
@@ -43,6 +87,18 @@ class _PigeonScreenState extends State<PigeonScreen>
     super.dispose();
   }
 
+  void _openChat(Map<String, dynamic> chat) {
+    setState(() {
+      _activeChat = chat;
+    });
+  }
+
+  void _closeChat() {
+    setState(() {
+      _activeChat = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = EnxosTheme.paletteOf(context);
@@ -50,49 +106,247 @@ class _PigeonScreenState extends State<PigeonScreen>
     return EnxosShell(
       module: EnxModule.pigeon,
       onLauncherTap: widget.onLauncherTap,
-      extraActionLabel: 'Bloquear módulo',
-      extraActionIcon: Icons.lock_outline,
-      onExtraAction: () => Navigator.of(context).pop(),
-      child: Column(
-        children: [
-          // Abas
-          _PigeonTabs(
-            controller: _tabController,
-            primary: _primary,
-            palette: palette,
-          ),
-          const SizedBox(height: 8),
-
-          // Barra de busca
-          _SearchBar(primary: _primary),
-          const SizedBox(height: 8),
-
-          // Conteúdo da aba
-          Expanded(
-            child: Stack(
+      extraActionLabel: _activeChat != null ? 'Voltar às mensagens' : 'Bloquear módulo',
+      extraActionIcon: _activeChat != null ? Icons.arrow_back : Icons.lock_outline,
+      onExtraAction: () {
+        if (_activeChat != null) {
+          _closeChat();
+        } else {
+          Navigator.of(context).pop();
+        }
+      },
+      child: _activeChat != null
+          ? _ChatDetailView(
+              chat: _activeChat!,
+              primary: _primary,
+              palette: palette,
+              onBack: _closeChat,
+            )
+          : Column(
               children: [
-                TabBarView(
+                // Abas
+                _PigeonTabs(
                   controller: _tabController,
-                  children: [
-                    _MensagensTab(chats: _mockChats, primary: _primary, palette: palette),
-                    _ContatosTab(primary: _primary, palette: palette),
-                    _FeedTab(primary: _primary, palette: palette),
-                    _PTTTab(primary: _primary, palette: palette),
-                  ],
+                  primary: _primary,
+                  palette: palette,
                 ),
+                const SizedBox(height: 8),
 
-                // FAB
-                if (_tabIndex == 0 || _tabIndex == 1)
-                  Positioned(
-                    bottom: 12,
-                    right: 4,
-                    child: _FAB(primary: _primary),
+                // Barra de busca
+                const _SearchBar(primary: _primary),
+                const SizedBox(height: 8),
+
+                // Conteúdo da aba
+                Expanded(
+                  child: Stack(
+                    children: [
+                      TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _MensagensTab(
+                            chats: _mockChats,
+                            primary: _primary,
+                            palette: palette,
+                            onChatTap: _openChat,
+                          ),
+                          _ContatosTab(primary: _primary, palette: palette),
+                          _FeedTab(primary: _primary, palette: palette),
+                          _PTTTab(primary: _primary, palette: palette),
+                        ],
+                      ),
+
+                      // FAB
+                      if (_tabIndex == 0 || _tabIndex == 1)
+                        Positioned(
+                          bottom: 12,
+                          right: 4,
+                          child: _FAB(primary: _primary),
+                        ),
+                    ],
                   ),
+                ),
               ],
             ),
-          ),
-        ],
+    );
+  }
+}
+
+// ── Widget de Exibição do Selo de Identificação ────────────────
+class _VerifiedBadge extends StatelessWidget {
+  const _VerifiedBadge({required this.verified, required this.color});
+
+  final bool verified;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!verified || color == null) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.only(left: 4),
+      child: Icon(
+        Icons.check_circle,
+        size: 14,
+        color: color,
       ),
+    );
+  }
+}
+
+// ── Tela Interna de Chat Individual ───────────────────────────
+class _ChatDetailView extends StatefulWidget {
+  const _ChatDetailView({
+    required this.chat,
+    required this.primary,
+    required this.palette,
+    required this.onBack,
+  });
+
+  final Map<String, dynamic> chat;
+  final Color primary;
+  final EnxosPalette palette;
+  final VoidCallback onBack;
+
+  @override
+  State<_ChatDetailView> createState() => _ChatDetailViewState();
+}
+
+class _ChatDetailViewState extends State<_ChatDetailView> {
+  final TextEditingController _msgController = TextEditingController();
+  final List<String> _messages = [
+    'Olá! Como vão as coisas por aí?',
+    'Tudo ótimo por aqui, estruturando o ecossistema.',
+  ];
+
+  void _sendMessage() {
+    if (_msgController.text.trim().isEmpty) return;
+    setState(() {
+      _messages.add(_msgController.text.trim());
+      _msgController.clear();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final name = widget.chat['name'] as String;
+    final isVerified = widget.chat['verified'] as bool;
+    final verifiedColor = widget.chat['verifiedColor'] as Color?;
+
+    return Column(
+      children: [
+        // Topbar do Chat Interno
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: widget.palette.border)),
+          ),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back),
+                color: widget.palette.textPrimary,
+                onPressed: widget.onBack,
+              ),
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: widget.primary.withValues(alpha: 0.15),
+                child: Text(
+                  name[0],
+                  style: TextStyle(
+                    color: widget.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        name,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: widget.palette.textPrimary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                    _VerifiedBadge(verified: isVerified, color: verifiedColor),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.call_outlined),
+                color: widget.primary,
+                onPressed: () {},
+              ),
+            ],
+          ),
+        ),
+
+        // Lista de Mensagens do Chat
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.all(12),
+            itemCount: _messages.length,
+            itemBuilder: (context, index) {
+              final isMe = index % 2 != 0;
+              return Align(
+                alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isMe ? widget.primary.withValues(alpha: 0.2) : widget.palette.card,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: widget.palette.border),
+                  ),
+                  child: Text(
+                    _messages[index],
+                    style: TextStyle(
+                      color: widget.palette.textPrimary,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+
+        // Barra de Envio de Mensagem
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: widget.palette.card,
+            border: Border(top: BorderSide(color: widget.palette.border)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _msgController,
+                  style: TextStyle(color: widget.palette.textPrimary),
+                  decoration: InputDecoration(
+                    hintText: 'Digite sua mensagem...',
+                    hintStyle: TextStyle(color: widget.palette.textMuted),
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  ),
+                  onSubmitted: (_) => _sendMessage(),
+                ),
+              ),
+              IconButton(
+                icon: Icon(Icons.send, color: widget.primary),
+                onPressed: _sendMessage,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -192,11 +446,13 @@ class _MensagensTab extends StatelessWidget {
     required this.chats,
     required this.primary,
     required this.palette,
+    required this.onChatTap,
   });
 
   final List<Map<String, dynamic>> chats;
   final Color primary;
   final EnxosPalette palette;
+  final ValueChanged<Map<String, dynamic>> onChatTap;
 
   @override
   Widget build(BuildContext context) {
@@ -210,13 +466,17 @@ class _MensagensTab extends StatelessWidget {
       itemBuilder: (context, i) {
         final chat = chats[i];
         final unread = chat['unread'] as int;
+        final name = chat['name'] as String;
+        final isVerified = chat['verified'] as bool;
+        final verifiedColor = chat['verifiedColor'] as Color?;
+
         return ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           leading: CircleAvatar(
             radius: 24,
             backgroundColor: primary.withValues(alpha: 0.15),
             child: Text(
-              (chat['name'] as String)[0],
+              name[0],
               style: TextStyle(
                 color: primary,
                 fontWeight: FontWeight.w700,
@@ -224,13 +484,21 @@ class _MensagensTab extends StatelessWidget {
               ),
             ),
           ),
-          title: Text(
-            chat['name'] as String,
-            style: TextStyle(
-              color: palette.textPrimary,
-              fontWeight: FontWeight.w700,
-              fontSize: 14,
-            ),
+          title: Row(
+            children: [
+              Flexible(
+                child: Text(
+                  name,
+                  style: TextStyle(
+                    color: palette.textPrimary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              _VerifiedBadge(verified: isVerified, color: verifiedColor),
+            ],
           ),
           subtitle: Text(
             chat['msg'] as String,
@@ -271,7 +539,7 @@ class _MensagensTab extends StatelessWidget {
                 const SizedBox(height: 16),
             ],
           ),
-          onTap: () {},
+          onTap: () => onChatTap(chat),
         );
       },
     );
