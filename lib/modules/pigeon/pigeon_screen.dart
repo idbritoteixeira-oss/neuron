@@ -345,7 +345,7 @@ class _PTTTab extends StatelessWidget {
               color: primary.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.mic_outlined, size: 40, color: primary),
+            child: Icon(Icons.close_fullscreen, size: 40, color: primary),
           ),
           const SizedBox(height: 16),
           Text(

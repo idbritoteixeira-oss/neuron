@@ -197,44 +197,48 @@ class _HeaderState extends State<_Header> {
         border: Border(bottom: BorderSide(color: widget.palette.border, width: 2)),
       ),
       child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: logoColor,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              logoText,
-              style: TextStyle(
-                color: logoTextColor,
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.5,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Flexible(
-            child: Text(
-              currentModule?.title ?? 'enxOS',
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-              style: TextStyle(
-                color: widget.palette.textPrimary,
-                fontSize: 25,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.8,
-              ),
-            ),
-          ),
-          const Spacer(),
-          PopupMenuButton<_ShellAction>(
-  tooltip: 'Opções',
-  padding: EdgeInsets.zero,
-  icon: Icon(Icons.more_vert, color: widget.palette.textPrimary),
+  children: [
+    // Logo fixo
+    Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        color: logoColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        logoText,
+        style: TextStyle(
+          color: logoTextColor,
+          fontSize: 18,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.5,
+        ),
+      ),
+    ),
+    const SizedBox(width: 12),
+
+    // Título ocupa o espaço disponível entre logo e menu
+    Expanded(
+      child: Text(
+        currentModule?.title ?? 'enxOS',
+        overflow: TextOverflow.ellipsis,
+        maxLines: 1,
+        style: TextStyle(
+          color: widget.palette.textPrimary,
+          fontSize: 25,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.8,
+        ),
+      ),
+    ),
+
+    // Menu sempre colado na direita
+    PopupMenuButton<_ShellAction>(
+      tooltip: 'Opções',
+      padding: EdgeInsets.zero,
+      icon: Icon(Icons.more_vert, color: widget.palette.textPrimary),
             onSelected: (action) {
               switch (action) {
                 case _ShellAction.toggleTheme:
