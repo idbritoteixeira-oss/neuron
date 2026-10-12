@@ -192,7 +192,7 @@ class _HeaderState extends State<_Header> {
 
     return Container(
       // Padding esquerdo reduzido para colar mais na lateral
-      padding: const EdgeInsets.fromLTRB(18, 10, 8;, 10),
+      padding: const EdgeInsets.fromLTRB(18, 10, 8, 10),
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: widget.palette.border, width: 2)),
       ),
