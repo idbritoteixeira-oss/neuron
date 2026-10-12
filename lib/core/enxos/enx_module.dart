@@ -14,7 +14,7 @@ enum EnxModule {
     description: 'Media Outlet Pigeon',
   ),
   freemarket(
-    title: 'Market',
+    title: 'FreeMarket',
     abbreviation: 'fre',
     brandColorValue: 0xFFB3611E,
     id: 'freeId',
