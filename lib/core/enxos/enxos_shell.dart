@@ -93,7 +93,7 @@ class EnxosShell extends StatelessWidget {
                             ),
                             Expanded(
                               child: Padding(
-                                padding: const EdgeInsets.fromLTRB(18, 16, 4, 12),
+                                padding: const EdgeInsets.fromLTRB(18, 16, 18, 12),
                                 child: child,
                               ),
                             ),
@@ -192,7 +192,7 @@ class _HeaderState extends State<_Header> {
 
     return Container(
       // Padding esquerdo reduzido para colar mais na lateral
-      padding: const EdgeInsets.fromLTRB(4, 10, 4, 10),
+      padding: const EdgeInsets.fromLTRB(18, 10, 8;, 10),
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: widget.palette.border, width: 2)),
       ),
@@ -232,8 +232,9 @@ class _HeaderState extends State<_Header> {
           ),
           const Spacer(),
           PopupMenuButton<_ShellAction>(
-            tooltip: 'Opções',
-            icon: Icon(Icons.more_vert, color: widget.palette.textPrimary),
+  tooltip: 'Opções',
+  padding: EdgeInsets.zero,
+  icon: Icon(Icons.more_vert, color: widget.palette.textPrimary),
             onSelected: (action) {
               switch (action) {
                 case _ShellAction.toggleTheme:
