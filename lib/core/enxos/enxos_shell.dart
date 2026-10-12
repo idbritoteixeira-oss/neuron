@@ -224,7 +224,7 @@ class _HeaderState extends State<_Header> {
               maxLines: 1,
               style: TextStyle(
                 color: widget.palette.textPrimary,
-                fontSize: 29,
+                fontSize: 25,
                 fontWeight: FontWeight.w700,
                 letterSpacing: -0.8,
               ),
