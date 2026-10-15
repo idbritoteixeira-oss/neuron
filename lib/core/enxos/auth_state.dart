@@ -1,3 +1,7 @@
+import 'package:flutter/foundation.dart';
+
+import 'auth_repository.dart';
+
 class AuthState extends ChangeNotifier {
   AuthState(this._repository);
 
@@ -7,7 +11,7 @@ class AuthState extends ChangeNotifier {
   bool _isLoading = false;
   String? _publicId;
   String? _tokenPortao;
-  Map<String, dynamic>? _subModules; // <-- Armazena os IDs dos submódulos
+  Map<String, dynamic>? _subModules;
   String? _error;
 
   bool get isAuthenticated => _isAuthenticated;
@@ -34,7 +38,7 @@ class AuthState extends ChangeNotifier {
       _isAuthenticated = result.authenticated;
       _publicId = result.authenticated ? publicId.trim() : null;
       _tokenPortao = result.tokenPortao;
-      _subModules = result.modules; // <-- Captura os IDs (id_inx, id_pru, id_free)
+      _subModules = result.modules;
       _error = result.message;
       
       return result.authenticated;
