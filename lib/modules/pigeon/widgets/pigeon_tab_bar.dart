@@ -25,7 +25,7 @@ class PigeonTabBar extends StatelessWidget {
         labelColor: primary,
         unselectedLabelColor: palette.textSecondary,
         indicatorColor: primary,
-        indicatorWeight: 2.5,
+        indicatorWeight: 4,
         labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
         unselectedLabelStyle: const TextStyle(
           fontSize: 13,

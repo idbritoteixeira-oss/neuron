@@ -89,7 +89,7 @@ class MessagesTab extends StatelessWidget {
                     fontSize: 11,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 if (conversation.unreadCount > 0)
                   Container(
                     constraints: const BoxConstraints(minWidth: 18),
