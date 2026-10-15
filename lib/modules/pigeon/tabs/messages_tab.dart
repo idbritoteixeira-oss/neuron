@@ -11,6 +11,7 @@ class MessagesTab extends StatelessWidget {
     required this.primary,
     required this.palette,
     required this.onConversationTap,
+    required this.onProfileTap,
     super.key,
   });
 
@@ -18,6 +19,7 @@ class MessagesTab extends StatelessWidget {
   final Color primary;
   final EnxosPalette palette;
   final ValueChanged<PigeonConversation> onConversationTap;
+  final ValueChanged<PigeonProfile> onProfileTap;
 
   @override
   Widget build(BuildContext context) {
@@ -41,11 +43,14 @@ class MessagesTab extends StatelessWidget {
             horizontal: 8,
             vertical: 4,
           ),
-          leading: PigeonAvatar(
-            profile: profile,
-            primary: primary,
-            palette: palette,
-            radius: 23,
+          leading: GestureDetector(
+            onTap: () => onProfileTap(profile),
+            child: PigeonAvatar(
+              profile: profile,
+              primary: primary,
+              palette: palette,
+              radius: 23,
+            ),
           ),
           title: Row(
             children: [

@@ -11,6 +11,7 @@ class ChatDetailView extends StatefulWidget {
     required this.primary,
     required this.palette,
     required this.onBack,
+    required this.onProfileTap,
     required this.onMessageSent,
     super.key,
   });
@@ -19,6 +20,7 @@ class ChatDetailView extends StatefulWidget {
   final Color primary;
   final EnxosPalette palette;
   final VoidCallback onBack;
+  final ValueChanged<PigeonProfile> onProfileTap;
   final ValueChanged<PigeonChatMessage> onMessageSent;
 
   @override
@@ -94,11 +96,16 @@ class _ChatDetailViewState extends State<ChatDetailView> {
                 onPressed: widget.onBack,
                 icon: Icon(Icons.arrow_back, color: widget.primary),
               ),
-              PigeonAvatar(
-                profile: profile,
-                primary: widget.primary,
-                palette: widget.palette,
-                radius: 19,
+              IconButton(
+                tooltip: 'Ver perfil',
+                onPressed: () => widget.onProfileTap(profile),
+                padding: EdgeInsets.zero,
+                icon: PigeonAvatar(
+                  profile: profile,
+                  primary: widget.primary,
+                  palette: widget.palette,
+                  radius: 19,
+                ),
               ),
               const SizedBox(width: 9),
               Expanded(

@@ -11,6 +11,7 @@ class ContactsTab extends StatelessWidget {
     required this.primary,
     required this.palette,
     required this.onContactTap,
+    required this.onProfileTap,
     super.key,
   });
 
@@ -18,6 +19,7 @@ class ContactsTab extends StatelessWidget {
   final Color primary;
   final EnxosPalette palette;
   final ValueChanged<PigeonProfile> onContactTap;
+  final ValueChanged<PigeonProfile> onProfileTap;
 
   @override
   Widget build(BuildContext context) {
@@ -42,12 +44,15 @@ class ContactsTab extends StatelessWidget {
             horizontal: 8,
             vertical: 4,
           ),
-          leading: PigeonAvatar(
-            profile: contact,
-            primary: primary,
-            palette: palette,
-            radius: 23,
-            showOnline: true,
+          leading: GestureDetector(
+            onTap: () => onProfileTap(contact),
+            child: PigeonAvatar(
+              profile: contact,
+              primary: primary,
+              palette: palette,
+              radius: 23,
+              showOnline: true,
+            ),
           ),
           title: Row(
             children: [
