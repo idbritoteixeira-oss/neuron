@@ -25,7 +25,7 @@ Future<void> main() async {
           create: (_) => EnxosWatercolorState()..start(),
         ),
         ChangeNotifierProvider(
-          create: (_) => AuthState(DemoEnxosAuthRepository()),
+          create: (_) => AuthState(NetworkEnxosAuthRepository()),
         ),
         ChangeNotifierProvider(
           create: (_) => ModuleState(DemoModuleAuthRepository()),
