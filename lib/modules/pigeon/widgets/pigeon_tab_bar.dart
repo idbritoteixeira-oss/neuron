@@ -25,17 +25,32 @@ class PigeonTabBar extends StatelessWidget {
         labelColor: primary,
         unselectedLabelColor: palette.textSecondary,
         indicatorColor: primary,
-        indicatorWeight: 4,
-        labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+        indicatorWeight: 2.5,
+        labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+        // Força a altura padrão a ficar mais enxuta
+        indicatorSize: TabBarIndicatorSize.label,
+        labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
         unselectedLabelStyle: const TextStyle(
-          fontSize: 13,
+          fontSize: 12,
           fontWeight: FontWeight.w600,
         ),
         tabs: const [
-          Tab(text: 'Mensagens'),
-          Tab(text: 'Contatos'),
-          Tab(text: 'Feed'),
-          Tab(text: 'PTT'),
+          Tab(
+            height: 36, // Reduz a altura vertical interna da aba
+            text: 'Mensagens',
+          ),
+          Tab(
+            height: 36,
+            text: 'Contatos',
+          ),
+          Tab(
+            height: 36,
+            text: 'Feed',
+          ),
+          Tab(
+            height: 36,
+            text: 'PTT',
+          ),
         ],
       ),
     );

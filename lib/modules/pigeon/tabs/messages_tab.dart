@@ -89,26 +89,14 @@ class MessagesTab extends StatelessWidget {
                     fontSize: 11,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 if (conversation.unreadCount > 0)
                   Container(
-                    constraints: const BoxConstraints(minWidth: 18),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 5,
-                      vertical: 2,
-                    ),
-                    alignment: Alignment.center,
+                    width: 10,
+                    height: 10,
                     decoration: BoxDecoration(
-                      color: palette.badgeMessage,
-                      borderRadius: BorderRadius.circular(9),
-                    ),
-                    child: Text(
-                      '${conversation.unreadCount}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                      ),
+                      color: primary,
+                      shape: BoxShape.circle,
                     ),
                   ),
               ],

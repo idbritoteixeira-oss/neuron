@@ -39,7 +39,7 @@ class _FeedTabState extends State<FeedTab> {
         content: TextField(
           controller: controller,
           autofocus: true,
-          maxLines: 5,
+          maxLines: 4,
           maxLength: 1000,
           style: TextStyle(color: widget.palette.textPrimary),
           decoration: const InputDecoration(
@@ -74,7 +74,7 @@ class _FeedTabState extends State<FeedTab> {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(4, 8, 4, 72),
+      padding: const EdgeInsets.fromLTRB(4, 4, 4, 72),
       children: [
         _Composer(
           currentUser: widget.currentUser,
@@ -82,7 +82,7 @@ class _FeedTabState extends State<FeedTab> {
           palette: widget.palette,
           onTap: _composePost,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         for (final post in widget.posts)
           _PostCard(
             post: post,
@@ -96,7 +96,7 @@ class _FeedTabState extends State<FeedTab> {
             child: Center(
               child: Text(
                 'Ainda não há publicações.',
-                style: TextStyle(color: widget.palette.textSecondary),
+                style: TextStyle(color: widget.palette.textSecondary, fontSize: 13),
               ),
             ),
           ),
@@ -121,62 +121,51 @@ class _Composer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: palette.card,
         border: Border.all(color: palette.border),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            'Publicações',
-            style: TextStyle(
-              color: palette.textPrimary,
-              fontWeight: FontWeight.w700,
-              fontSize: 18,
-            ),
+          PigeonAvatar(
+            profile: currentUser,
+            primary: primary,
+            palette: palette,
+            radius: 17,
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              PigeonAvatar(
-                profile: currentUser,
-                primary: primary,
-                palette: palette,
-                radius: 20,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Material(
-                  color: palette.input,
-                  borderRadius: BorderRadius.circular(22),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(22),
-                    onTap: onTap,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 15,
-                        vertical: 11,
-                      ),
-                      child: Text(
-                        'Em que estás a pensar?',
-                        style: TextStyle(
-                          color: palette.textSecondary,
-                          fontSize: 13,
-                        ),
-                      ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Material(
+              color: palette.input,
+              borderRadius: BorderRadius.circular(18),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(18),
+                onTap: onTap,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  child: Text(
+                    'Pensando em?',
+                    style: TextStyle(
+                      color: palette.textSecondary,
+                      fontSize: 12.5,
                     ),
                   ),
                 ),
               ),
-              IconButton(
-                onPressed: onTap,
-                tooltip: 'Criar publicação',
-                icon: Icon(Icons.image_outlined, color: primary),
-              ),
-            ],
+            ),
+          ),
+          const SizedBox(width: 4),
+          IconButton(
+            constraints: const BoxConstraints(),
+            padding: const EdgeInsets.all(6),
+            onPressed: onTap,
+            tooltip: 'Criar publicação',
+            icon: Icon(Icons.image_outlined, color: primary, size: 20),
           ),
         ],
       ),
@@ -200,12 +189,12 @@ class _PostCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: palette.card,
         border: Border.all(color: palette.border),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -216,10 +205,10 @@ class _PostCard extends StatelessWidget {
                 profile: post.author,
                 primary: primary,
                 palette: palette,
-                radius: 18,
+                radius: 15,
                 useVerificationFallback: true,
               ),
-              const SizedBox(width: 9),
+              const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -234,7 +223,7 @@ class _PostCard extends StatelessWidget {
                             style: TextStyle(
                               color: palette.textPrimary,
                               fontWeight: FontWeight.w700,
-                              fontSize: 13,
+                              fontSize: 12.5,
                             ),
                           ),
                         ),
@@ -245,28 +234,28 @@ class _PostCard extends StatelessWidget {
                       post.timeLabel,
                       style: TextStyle(
                         color: palette.textSecondary,
-                        fontSize: 11,
+                        fontSize: 10.5,
                       ),
                     ),
                   ],
                 ),
               ),
-              Icon(Icons.more_horiz, color: palette.textMuted),
+              Icon(Icons.more_horiz, color: palette.textMuted, size: 18),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             post.content,
             style: TextStyle(
               color: palette.textPrimary,
-              fontSize: 14,
-              height: 1.4,
+              fontSize: 13,
+              height: 1.35,
             ),
           ),
           if (post.imageUrl != null) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(6),
               child: Image.network(
                 post.imageUrl!,
                 width: double.infinity,
@@ -275,33 +264,44 @@ class _PostCard extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
           Divider(height: 1, color: palette.border),
           Row(
             children: [
               Expanded(
-                child: TextButton.icon(
+                child: InkWell(
                   onPressed: onLike,
-                  icon: Icon(
-                    post.isLiked ? Icons.favorite : Icons.favorite_border,
-                    size: 17,
-                    color: post.isLiked
-                        ? const Color(0xFFF5B041)
-                        : palette.textSecondary,
-                  ),
-                  label: Text(
-                    '${post.likes}',
-                    style: TextStyle(
-                      color: post.isLiked
-                          ? const Color(0xFFF5B041)
-                          : palette.textSecondary,
-                      fontSize: 12,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          post.isLiked ? Icons.favorite : Icons.favorite_border,
+                          size: 15,
+                          color: post.isLiked
+                              ? const Color(0xFFF5B041)
+                              : palette.textSecondary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${post.likes}',
+                          style: TextStyle(
+                            color: post.isLiked
+                                ? const Color(0xFFF5B041)
+                                : palette.textSecondary,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
+              Container(width: 1, height: 16, color: palette.border),
               Expanded(
-                child: TextButton.icon(
+                child: InkWell(
                   onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text(
@@ -309,16 +309,26 @@ class _PostCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  icon: Icon(
-                    Icons.chat_bubble_outline,
-                    size: 16,
-                    color: palette.textSecondary,
-                  ),
-                  label: Text(
-                    '${post.comments}',
-                    style: TextStyle(
-                      color: palette.textSecondary,
-                      fontSize: 12,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.chat_bubble_outline,
+                          size: 14.5,
+                          color: palette.textSecondary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${post.comments}',
+                          style: TextStyle(
+                            color: palette.textSecondary,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

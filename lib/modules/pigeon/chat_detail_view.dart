@@ -82,7 +82,7 @@ class _ChatDetailViewState extends State<ChatDetailView> {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 7),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           decoration: BoxDecoration(
             color: widget.palette.card,
             border: Border(
@@ -92,66 +92,76 @@ class _ChatDetailViewState extends State<ChatDetailView> {
           child: Row(
             children: [
               IconButton(
+                constraints: const BoxConstraints(),
+                padding: const EdgeInsets.all(6),
                 tooltip: 'Voltar',
                 onPressed: widget.onBack,
-                icon: Icon(Icons.arrow_back, color: widget.primary),
+                icon: Icon(Icons.arrow_back, color: widget.primary, size: 20),
               ),
-              IconButton(
-                tooltip: 'Ver perfil',
-                onPressed: () => widget.onProfileTap(profile),
-                padding: EdgeInsets.zero,
-                icon: PigeonAvatar(
+              const SizedBox(width: 4),
+              GestureDetector(
+                onTap: () => widget.onProfileTap(profile),
+                child: PigeonAvatar(
                   profile: profile,
                   primary: widget.primary,
                   palette: widget.palette,
-                  radius: 19,
+                  radius: 16,
                 ),
               ),
-              const SizedBox(width: 9),
+              const SizedBox(width: 8),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            profile.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: widget.palette.textPrimary,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
+                child: InkWell(
+                  onTap: () => widget.onProfileTap(profile),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              profile.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: widget.palette.textPrimary,
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
-                        ),
-                        VerifiedBadge(verification: profile.verification),
-                      ],
-                    ),
-                    Text(
-                      profile.isOnline ? 'Online' : profile.id,
-                      style: TextStyle(
-                        color: widget.palette.textSecondary,
-                        fontSize: 11,
+                          VerifiedBadge(verification: profile.verification),
+                        ],
                       ),
-                    ),
-                  ],
+                      Text(
+                        profile.isOnline ? 'Online' : profile.id,
+                        style: TextStyle(
+                          color: widget.palette.textSecondary,
+                          fontSize: 10.5,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               IconButton(
+                constraints: const BoxConstraints(),
+                padding: const EdgeInsets.all(6),
                 tooltip: 'Chamada de voz',
                 onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Chamadas ainda não conectadas ao serviço.'),
                   ),
                 ),
-                icon: Icon(Icons.call_outlined, color: widget.primary),
+                icon: Icon(Icons.call_outlined, color: widget.primary, size: 19),
               ),
+              const SizedBox(width: 4),
               PopupMenuButton<String>(
+                padding: EdgeInsets.zero,
                 icon: Icon(
                   Icons.more_vert,
                   color: widget.palette.textSecondary,
+                  size: 20,
                 ),
                 onSelected: (value) {
                   if (value == 'delete') {
@@ -183,7 +193,7 @@ class _ChatDetailViewState extends State<ChatDetailView> {
             color: _chatBackground,
             child: ListView.builder(
               controller: _scrollController,
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               itemCount: widget.conversation.messages.length,
               itemBuilder: (context, index) {
                 final message = widget.conversation.messages[index];
@@ -198,7 +208,7 @@ class _ChatDetailViewState extends State<ChatDetailView> {
           ),
         ),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           decoration: BoxDecoration(
             color: widget.palette.input,
             border: Border(
@@ -216,7 +226,7 @@ class _ChatDetailViewState extends State<ChatDetailView> {
                   onSubmitted: (_) => _sendMessage(),
                   style: TextStyle(
                     color: widget.palette.textPrimary,
-                    fontSize: 14,
+                    fontSize: 13.5,
                   ),
                   decoration: InputDecoration(
                     hintText: 'Mensagem...',
@@ -225,19 +235,19 @@ class _ChatDetailViewState extends State<ChatDetailView> {
                     fillColor: widget.palette.card,
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 15,
-                      vertical: 11,
+                      horizontal: 12,
+                      vertical: 8,
                     ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(22),
+                      borderRadius: BorderRadius.circular(20),
                       borderSide: BorderSide.none,
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(22),
+                      borderRadius: BorderRadius.circular(20),
                       borderSide: BorderSide.none,
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(22),
+                      borderRadius: BorderRadius.circular(20),
                       borderSide: BorderSide(
                         color: widget.primary.withValues(alpha: 0.55),
                       ),
@@ -245,14 +255,17 @@ class _ChatDetailViewState extends State<ChatDetailView> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Material(
                 color: widget.primary,
                 shape: const CircleBorder(),
-                child: IconButton(
-                  tooltip: 'Enviar mensagem',
-                  onPressed: _sendMessage,
-                  icon: const Icon(Icons.send, color: Colors.white, size: 18),
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: _sendMessage,
+                  child: const Padding(
+                    padding: EdgeInsets.all(8),
+                    child: Icon(Icons.send, color: Colors.white, size: 16),
+                  ),
                 ),
               ),
             ],
@@ -283,21 +296,21 @@ class _MessageBubble extends StatelessWidget {
       alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.sizeOf(context).width * 0.74,
+          maxWidth: MediaQuery.sizeOf(context).width * 0.75,
         ),
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        padding: const EdgeInsets.fromLTRB(11, 8, 9, 6),
+        margin: const EdgeInsets.symmetric(vertical: 3),
+        padding: const EdgeInsets.fromLTRB(10, 6, 8, 4),
         decoration: BoxDecoration(
           color: isMine ? sentColor : receivedColor,
           borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(isMine ? 9 : 0),
-            topRight: Radius.circular(isMine ? 0 : 9),
-            bottomLeft: const Radius.circular(9),
-            bottomRight: const Radius.circular(9),
+            topLeft: Radius.circular(isMine ? 8 : 0),
+            topRight: Radius.circular(isMine ? 0 : 8),
+            bottomLeft: const Radius.circular(8),
+            bottomRight: const Radius.circular(8),
           ),
           boxShadow: const [
             BoxShadow(
-              color: Color(0x16000000),
+              color: Color(0x10000000),
               blurRadius: 1,
               offset: Offset(0, 1),
             ),
@@ -312,12 +325,12 @@ class _MessageBubble extends StatelessWidget {
                 message.body,
                 style: TextStyle(
                   color: palette.textPrimary,
-                  fontSize: 13,
-                  height: 1.35,
+                  fontSize: 12.5,
+                  height: 1.3,
                 ),
               ),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 2),
             Text(
               message.timeLabel,
               style: TextStyle(color: palette.textSecondary, fontSize: 9),
