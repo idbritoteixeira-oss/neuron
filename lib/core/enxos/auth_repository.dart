@@ -9,12 +9,19 @@ abstract interface class EnxosAuthRepository {
 }
 
 class AuthResult {
-  const AuthResult({required this.authenticated, this.message, this.tokenPortao, this.tokens});
+  const AuthResult({
+    required this.authenticated,
+    this.message,
+    this.tokenPortao,
+    this.tokens,
+    this.modules, // <-- Novo campo para os IDs da nação
+  });
 
   final bool authenticated;
   final String? message;
   final String? tokenPortao;
   final List<dynamic>? tokens;
+  final Map<String, dynamic>? modules;
 }
 
 class NetworkEnxosAuthRepository implements EnxosAuthRepository {
@@ -56,6 +63,7 @@ class NetworkEnxosAuthRepository implements EnxosAuthRepository {
             message: data['message'],
             tokenPortao: data['token'],
             tokens: data['dll_tts'],
+            modules: data['modules'], // <-- Repassa o mapa com id_inx, id_pru e id_free
           );
         } else {
           return AuthResult(

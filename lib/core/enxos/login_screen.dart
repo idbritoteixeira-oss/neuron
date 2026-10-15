@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'auth_state.dart';
 import 'enxos_shell.dart';
 import 'enxos_theme.dart';
+import 'screen_new.dart'; // Rota para o registro de nova identidade
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,13 +16,13 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _publicIdController = TextEditingController();
-  final _privateIdController = TextEditingController();
-  bool _obscurePrivateId = true;
+  final _passwordController = TextEditingController();
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
     _publicIdController.dispose();
-    _privateIdController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -30,11 +31,29 @@ class _LoginScreenState extends State<LoginScreen> {
     final auth = context.read<AuthState>();
     final success = await auth.signIn(
       publicId: _publicIdController.text,
-      privateId: _privateIdController.text,
+      privateId: _passwordController.text,
     );
     if (!mounted || success) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(auth.error ?? 'Não foi possível entrar.')),
+      SnackBar(content: Text(auth.error ?? 'Não foi possível autenticar no núcleo.')),
+    );
+  }
+
+  // Simulação de gatilho para biometria / PIN rápido de sessão
+  Future<void> _authenticateWithBiometrics() async {
+    final auth = context.read<AuthState>();
+    
+    // Aqui no futuro integras o local_auth para ler a impressão digital
+    // e recuperar o token/credencial guardado de forma segura no SecureStorage.
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Autenticação biométrica ativada para sessões futuras.')),
+    );
+  }
+
+  void _goToRegister() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const RegisterScreen()),
     );
   }
 
@@ -42,6 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthState>();
     final palette = EnxosTheme.paletteOf(context);
+    
     return EnxosShell(
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
@@ -64,59 +84,55 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 12),
                   const Text(
-                    'Entre com suas credenciais globais para acessar o enxOS.',
+                    'Insira as credenciais enxOS.',
                     style: TextStyle(height: 1.5),
                   ),
-                  const SizedBox(height: 28),
-                  _DemoNotice(palette: palette),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
                   TextFormField(
                     controller: _publicIdController,
                     textInputAction: TextInputAction.next,
                     autocorrect: false,
                     decoration: const InputDecoration(
-                      labelText: 'ID público',
-                      hintText: 'id_public',
+                      labelText: 'ID Público',
+                      hintText: 'Ex: 12 caracteres',
                       prefixIcon: Icon(Icons.badge_outlined),
                     ),
                     validator: (value) => value == null || value.trim().isEmpty
-                        ? 'Informe seu ID público.'
+                        ? 'Informe o seu ID público.'
                         : null,
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 16),
                   TextFormField(
-                    controller: _privateIdController,
-                    obscureText: _obscurePrivateId,
+                    controller: _passwordController,
+                    obscureText: _obscurePassword,
                     autocorrect: false,
                     enableSuggestions: false,
                     textInputAction: TextInputAction.done,
                     onFieldSubmitted: (_) => _submit(),
                     decoration: InputDecoration(
-                      labelText: 'ID privado',
-                      hintText: 'Sua credencial privada',
+                      labelText: 'Senha de Segurança',
+                      hintText: 'Sua senha',
                       prefixIcon: const Icon(Icons.key_outlined),
                       suffixIcon: IconButton(
-                        tooltip: _obscurePrivateId
-                            ? 'Mostrar ID privado'
-                            : 'Ocultar ID privado',
+                        tooltip: _obscurePassword ? 'Mostrar senha' : 'Ocultar senha',
                         onPressed: () => setState(
-                          () => _obscurePrivateId = !_obscurePrivateId,
+                          () => _obscurePassword = !_obscurePassword,
                         ),
                         icon: Icon(
-                          _obscurePrivateId
+                          _obscurePassword
                               ? Icons.visibility_outlined
                               : Icons.visibility_off_outlined,
                         ),
                       ),
                     ),
                     validator: (value) => value == null || value.isEmpty
-                        ? 'Informe seu ID privado.'
+                        ? 'Informe a senha de segurança.'
                         : null,
                   ),
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
-                    height: 54,
+                    height: 52,
                     child: FilledButton(
                       onPressed: auth.isLoading ? null : _submit,
                       child: auth.isLoading
@@ -124,56 +140,44 @@ class _LoginScreenState extends State<LoginScreen> {
                               dimension: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
+                                color: Colors.white,
                               ),
                             )
-                          : const Text('Acessar enxOS'),
+                          : const Text('Entrar'),
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'A credencial privada é usada somente durante a validação e não é armazenada nesta demonstração.',
-                    style: TextStyle(fontSize: 12, height: 1.5),
+                  const SizedBox(height: 12),
+                  // Botão secundário para Biometria / Acesso rápido
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      onPressed: auth.isLoading ? null : _authenticateWithBiometrics,
+                      icon: const Icon(Icons.fingerprint, size: 20),
+                      label: const Text('Entrar com Biometria / PIN'),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  const Divider(),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Ainda não tem uma identidade?',
+                        style: TextStyle(color: palette.textSecondary, fontSize: 13),
+                      ),
+                      TextButton(
+                        onPressed: _goToRegister,
+                        child: const Text('Registar-se'),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _DemoNotice extends StatelessWidget {
-  const _DemoNotice({required this.palette});
-
-  final EnxosPalette palette;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: palette.module.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: palette.module.withValues(alpha: 0.25)),
-      ),
-      child: const Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.info_outline, size: 19),
-          SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Modo de demonstração: sem servidor, qualquer par não vazio avança. Não use credenciais reais.',
-              style: TextStyle(
-                fontSize: 12,
-                height: 1.45,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

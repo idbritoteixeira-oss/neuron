@@ -1,7 +1,3 @@
-import 'package:flutter/foundation.dart';
-
-import 'auth_repository.dart';
-
 class AuthState extends ChangeNotifier {
   AuthState(this._repository);
 
@@ -10,11 +6,15 @@ class AuthState extends ChangeNotifier {
   bool _isAuthenticated = false;
   bool _isLoading = false;
   String? _publicId;
+  String? _tokenPortao;
+  Map<String, dynamic>? _subModules; // <-- Armazena os IDs dos submódulos
   String? _error;
 
   bool get isAuthenticated => _isAuthenticated;
   bool get isLoading => _isLoading;
   String? get publicId => _publicId;
+  String? get tokenPortao => _tokenPortao;
+  Map<String, dynamic>? get subModules => _subModules;
   String? get error => _error;
 
   Future<bool> signIn({
@@ -30,13 +30,19 @@ class AuthState extends ChangeNotifier {
         publicId: publicId.trim(),
         privateId: privateId,
       );
+      
       _isAuthenticated = result.authenticated;
       _publicId = result.authenticated ? publicId.trim() : null;
+      _tokenPortao = result.tokenPortao;
+      _subModules = result.modules; // <-- Captura os IDs (id_inx, id_pru, id_free)
       _error = result.message;
+      
       return result.authenticated;
     } catch (_) {
       _isAuthenticated = false;
       _publicId = null;
+      _tokenPortao = null;
+      _subModules = null;
       _error = 'Não foi possível validar a sessão. Tente novamente.';
       return false;
     } finally {
@@ -48,6 +54,8 @@ class AuthState extends ChangeNotifier {
   void signOut() {
     _isAuthenticated = false;
     _publicId = null;
+    _tokenPortao = null;
+    _subModules = null;
     _error = null;
     notifyListeners();
   }
