@@ -19,6 +19,7 @@ class EnxosShell extends StatelessWidget {
     this.extraActionLabel,
     this.extraActionIcon,
     this.onExtraAction,
+    this.headerActions = const [],
     super.key,
   });
 
@@ -29,6 +30,7 @@ class EnxosShell extends StatelessWidget {
   final String? extraActionLabel;
   final IconData? extraActionIcon;
   final VoidCallback? onExtraAction;
+  final List<Widget> headerActions;
 
   @override
   Widget build(BuildContext context) {
@@ -90,10 +92,16 @@ class EnxosShell extends StatelessWidget {
                               extraActionLabel: extraActionLabel,
                               extraActionIcon: extraActionIcon,
                               onExtraAction: onExtraAction,
+                              headerActions: headerActions,
                             ),
                             Expanded(
                               child: Padding(
-                                padding: const EdgeInsets.fromLTRB(18, 16, 18, 12),
+                                padding: const EdgeInsets.fromLTRB(
+                                  18,
+                                  16,
+                                  18,
+                                  12,
+                                ),
                                 child: child,
                               ),
                             ),
@@ -102,10 +110,7 @@ class EnxosShell extends StatelessWidget {
                               selectedModule: module,
                               onSelect: onLauncherTap,
                             ),
-                            _Footer(
-                              palette: palette,
-                              watercolor: watercolor,
-                            ),
+                            _Footer(palette: palette, watercolor: watercolor),
                           ],
                         ),
                       ),
@@ -130,6 +135,7 @@ class _Header extends StatefulWidget {
     required this.extraActionLabel,
     required this.extraActionIcon,
     required this.onExtraAction,
+    required this.headerActions,
   });
 
   final EnxosPalette palette;
@@ -139,6 +145,7 @@ class _Header extends StatefulWidget {
   final String? extraActionLabel;
   final IconData? extraActionIcon;
   final VoidCallback? onExtraAction;
+  final List<Widget> headerActions;
 
   @override
   State<_Header> createState() => _HeaderState();
@@ -194,51 +201,55 @@ class _HeaderState extends State<_Header> {
       // Padding esquerdo reduzido para colar mais na lateral
       padding: const EdgeInsets.fromLTRB(18, 10, 8, 10),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: widget.palette.border, width: 2)),
+        border: Border(
+          bottom: BorderSide(color: widget.palette.border, width: 2),
+        ),
       ),
       child: Row(
-  children: [
-    // Logo fixo
-    Container(
-      width: 32,
-      height: 32,
-      decoration: BoxDecoration(
-        color: logoColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        logoText,
-        style: TextStyle(
-          color: logoTextColor,
-          fontSize: 18,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.5,
-        ),
-      ),
-    ),
-    const SizedBox(width: 12),
+        children: [
+          // Logo fixo
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: logoColor,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              logoText,
+              style: TextStyle(
+                color: logoTextColor,
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
 
-    // Título ocupa o espaço disponível entre logo e menu
-    Expanded(
-      child: Text(
-        currentModule?.title ?? 'enxOS',
-        overflow: TextOverflow.ellipsis,
-        maxLines: 1,
-        style: TextStyle(
-          color: widget.palette.textPrimary,
-          fontSize: 25,
-          fontWeight: FontWeight.w700,
-          letterSpacing: -0.8,
-        ),
-      ),
-    ),
+          // Título ocupa o espaço disponível entre logo e menu
+          Expanded(
+            child: Text(
+              currentModule?.title ?? 'enxOS',
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+              style: TextStyle(
+                color: widget.palette.textPrimary,
+                fontSize: 25,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.8,
+              ),
+            ),
+          ),
 
-    // Menu sempre colado na direita
-    PopupMenuButton<_ShellAction>(
-      tooltip: 'Opções',
-      padding: EdgeInsets.zero,
-      icon: Icon(Icons.more_vert, color: widget.palette.textPrimary),
+          ...widget.headerActions,
+
+          // Menu sempre colado na direita
+          PopupMenuButton<_ShellAction>(
+            tooltip: 'Opções',
+            padding: EdgeInsets.zero,
+            icon: Icon(Icons.more_vert, color: widget.palette.textPrimary),
             onSelected: (action) {
               switch (action) {
                 case _ShellAction.toggleTheme:
@@ -294,10 +305,7 @@ class _HeaderState extends State<_Header> {
                 const PopupMenuDivider(),
                 const PopupMenuItem(
                   value: _ShellAction.signOut,
-                  child: _MenuLabel(
-                    icon: Icons.logout,
-                    text: 'Sair do enxOS',
-                  ),
+                  child: _MenuLabel(icon: Icons.logout, text: 'Sair do enxOS'),
                 ),
               ],
             ],
@@ -325,11 +333,7 @@ class _MenuLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 19),
-        const SizedBox(width: 12),
-        Text(text),
-      ],
+      children: [Icon(icon, size: 19), const SizedBox(width: 12), Text(text)],
     );
   }
 }
@@ -355,19 +359,17 @@ class _AppLauncher extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      _LauncherItem(
-        label: 'enxOS',
-        abbreviation: 'os',
-        color: palette.module,
-      ),
-      ..._moduleOrder.take(_maxModuleButtons).map(
-        (module) => _LauncherItem(
-          label: module.title,
-          abbreviation: module.abbreviation,
-          color: Color(module.brandColorValue),
-          module: module,
-        ),
-      ),
+      _LauncherItem(label: 'enxOS', abbreviation: 'os', color: palette.module),
+      ..._moduleOrder
+          .take(_maxModuleButtons)
+          .map(
+            (module) => _LauncherItem(
+              label: module.title,
+              abbreviation: module.abbreviation,
+              color: Color(module.brandColorValue),
+              module: module,
+            ),
+          ),
     ];
 
     return Container(
