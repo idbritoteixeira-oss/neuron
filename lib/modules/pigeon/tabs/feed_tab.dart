@@ -270,9 +270,9 @@ class _PostCard extends StatelessWidget {
             children: [
               Expanded(
                 child: InkWell(
-                  onPressed: onLike,
+                  onTap: onLike,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    padding: const EdgeInsets.symmetric(vertical: 6),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -302,7 +302,7 @@ class _PostCard extends StatelessWidget {
               Container(width: 1, height: 16, color: palette.border),
               Expanded(
                 child: InkWell(
-                  onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                  onTap: () => ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text(
                         'Comentários do feed ainda não conectados.',
@@ -310,7 +310,7 @@ class _PostCard extends StatelessWidget {
                     ),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    padding: const EdgeInsets.symmetric(vertical: 6),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
