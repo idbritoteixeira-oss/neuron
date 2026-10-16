@@ -9,7 +9,7 @@ import 'enxos_theme.dart';
 import 'module_state.dart';
 import 'module_unlock_dialog.dart';
 import '../../modules/freemarket/freemarket_screen.dart';
-import '../../modules/inasx/inasx_screen.dart';
+import de'../../modules/inasx/inasx_screen.dart';
 import '../../modules/pigeon/pigeon_screen.dart';
 
 // Models

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'enx_module.dart';
 import 'enxos_theme.dart';
+import 'auth_state.dart';
 import 'module_state.dart';
 
 class ModuleUnlockDialog extends StatefulWidget {
