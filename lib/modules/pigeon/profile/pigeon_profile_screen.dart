@@ -1,23 +1,28 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 import '../../../core/enxos/enxos_theme.dart';
 import '../models/pigeon_models.dart';
-import '../services/pigeon_profile_store.dart';
+import '../services/pigeon_api.dart';
 import '../widgets/verified_badge.dart';
 
 class PigeonProfileScreen extends StatefulWidget {
-  const PigeonProfileScreen({required this.profile, super.key});
+  const PigeonProfileScreen({
+    required this.profile,
+    required this.api,
+    super.key,
+  });
 
   final PigeonProfile profile;
+  final PigeonApi api;
 
   @override
   State<PigeonProfileScreen> createState() => _PigeonProfileScreenState();
 }
 
 class _PigeonProfileScreenState extends State<PigeonProfileScreen> {
-  static const _primary = Color(0xFF5AB31E);
-
-  late final TextEditingController _nameController;
   late final TextEditingController _bioController;
   late final TextEditingController _photoController;
   bool _saving = false;
@@ -26,7 +31,6 @@ class _PigeonProfileScreenState extends State<PigeonProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.profile.name);
     _bioController = TextEditingController(text: widget.profile.bio);
     _photoController = TextEditingController(
       text: widget.profile.avatarUrl ?? '',
@@ -35,7 +39,6 @@ class _PigeonProfileScreenState extends State<PigeonProfileScreen> {
 
   @override
   void dispose() {
-    _nameController.dispose();
     _bioController.dispose();
     _photoController.dispose();
     _photoFocusNode.dispose();
@@ -43,12 +46,7 @@ class _PigeonProfileScreenState extends State<PigeonProfileScreen> {
   }
 
   Future<void> _save() async {
-    final name = _nameController.text.trim();
     final photoUrl = _photoController.text.trim();
-    if (name.isEmpty) {
-      setState(() => _error = 'Informe um nome para o perfil.');
-      return;
-    }
     if (photoUrl.isNotEmpty) {
       final uri = Uri.tryParse(photoUrl);
       if (uri == null ||
@@ -65,26 +63,53 @@ class _PigeonProfileScreenState extends State<PigeonProfileScreen> {
       _saving = true;
       _error = null;
     });
-    final updated = PigeonProfile(
-      name: name,
-      id: widget.profile.id,
-      bio: _bioController.text.trim(),
-      isOnline: widget.profile.isOnline,
-      verification: widget.profile.verification,
-      avatarUrl: photoUrl.isEmpty ? null : photoUrl,
-    );
-
     try {
-      await PigeonProfileStore.save(updated);
+      String? photoDataUri;
+      if (photoUrl.isNotEmpty && photoUrl != widget.profile.avatarUrl) {
+        photoDataUri = await _downloadPhoto(photoUrl);
+      }
+      final updated = await widget.api.updateProfile(
+        bio: _bioController.text.trim(),
+        photoDataUri: photoDataUri,
+      );
       if (mounted) Navigator.of(context).pop(updated);
     } catch (_) {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'Não foi possível guardar o perfil neste dispositivo.';
+          _error = 'Não foi possível atualizar o perfil no servidor.';
         });
       }
     }
+  }
+
+  Future<String> _downloadPhoto(String photoUrl) async {
+    final response = await http
+        .get(Uri.parse(photoUrl))
+        .timeout(const Duration(seconds: 20));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw const PigeonApiException(
+        'Não foi possível baixar a imagem informada.',
+      );
+    }
+    if (response.bodyBytes.length > 5 * 1024 * 1024) {
+      throw const PigeonApiException('A imagem deve ter no máximo 5 MB.');
+    }
+    final contentType = response.headers['content-type']
+        ?.split(';')
+        .first
+        .trim()
+        .toLowerCase();
+    const supportedTypes = {
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+    };
+    if (contentType == null || !supportedTypes.contains(contentType)) {
+      throw const PigeonApiException('Use uma imagem JPEG, PNG, GIF ou WebP.');
+    }
+    return 'data:$contentType;base64,${base64Encode(response.bodyBytes)}';
   }
 
   Widget _avatar(EnxosPalette palette) {
@@ -112,9 +137,7 @@ class _PigeonProfileScreenState extends State<PigeonProfileScreen> {
     alignment: Alignment.center,
     color: palette.borderAvatar,
     child: Text(
-      _nameController.text.trim().isEmpty
-          ? '?'
-          : _nameController.text.trim().substring(0, 1).toUpperCase(),
+      widget.profile.initial,
       style: TextStyle(
         color: palette.textPrimary,
         fontSize: 34,
@@ -152,6 +175,12 @@ class _PigeonProfileScreenState extends State<PigeonProfileScreen> {
               ),
             ),
             Center(
+              child: Text(
+                'Nome de perfil: ${widget.profile.id}',
+                style: TextStyle(color: palette.textSecondary, fontSize: 13),
+              ),
+            ),
+            Center(
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -170,16 +199,6 @@ class _PigeonProfileScreenState extends State<PigeonProfileScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            TextField(
-              controller: _nameController,
-              maxLength: 40,
-              decoration: const InputDecoration(
-                labelText: 'Nome',
-                prefixIcon: Icon(Icons.person_outline),
-              ),
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 16),
             TextField(
               focusNode: _photoFocusNode,
               controller: _photoController,
@@ -251,7 +270,7 @@ class _PigeonProfileScreenState extends State<PigeonProfileScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'O perfil é guardado neste dispositivo. A sincronização com o servidor Pigeon ainda depende da ligação da API.',
+              'Biografia e foto são atualizadas no servidor Pigeon. O nome público é o seu ID.',
               textAlign: TextAlign.center,
               style: TextStyle(color: palette.textMuted, fontSize: 12),
             ),

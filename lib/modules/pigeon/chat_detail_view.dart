@@ -12,7 +12,9 @@ class ChatDetailView extends StatefulWidget {
     required this.palette,
     required this.onBack,
     required this.onProfileTap,
-    required this.onMessageSent,
+    required this.onSendMessage,
+    required this.onRenameContact,
+    required this.onDeleteConversation,
     super.key,
   });
 
@@ -21,7 +23,9 @@ class ChatDetailView extends StatefulWidget {
   final EnxosPalette palette;
   final VoidCallback onBack;
   final ValueChanged<PigeonProfile> onProfileTap;
-  final ValueChanged<PigeonChatMessage> onMessageSent;
+  final Future<void> Function(String body) onSendMessage;
+  final Future<void> Function(String name) onRenameContact;
+  final Future<void> Function() onDeleteConversation;
 
   @override
   State<ChatDetailView> createState() => _ChatDetailViewState();
@@ -30,6 +34,7 @@ class ChatDetailView extends StatefulWidget {
 class _ChatDetailViewState extends State<ChatDetailView> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  bool _sending = false;
 
   Color get _chatBackground => Theme.of(context).brightness == Brightness.dark
       ? const Color(0xFF0B141A)
@@ -43,21 +48,23 @@ class _ChatDetailViewState extends State<ChatDetailView> {
       ? const Color(0xFF202C33)
       : Colors.white;
 
-  void _sendMessage() {
+  Future<void> _sendMessage() async {
     final body = _messageController.text.trim();
-    if (body.isEmpty) return;
-    final now = DateTime.now();
-    final message = PigeonChatMessage(
-      body: body,
-      isMine: true,
-      timeLabel:
-          '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
-    );
-    setState(() {
-      widget.conversation.messages.add(message);
+    if (body.isEmpty || _sending) return;
+    setState(() => _sending = true);
+    try {
+      await widget.onSendMessage(body);
+      if (!mounted) return;
       _messageController.clear();
-    });
-    widget.onMessageSent(message);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Não foi possível enviar: $error')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -67,6 +74,87 @@ class _ChatDetailViewState extends State<ChatDetailView> {
         );
       }
     });
+  }
+
+  Future<void> _renameContact() async {
+    final controller = TextEditingController(
+      text: widget.conversation.profile.name,
+    );
+    final name = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: widget.palette.modal,
+        title: Text(
+          'Renomear contato',
+          style: TextStyle(color: widget.palette.textPrimary),
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLength: 40,
+          decoration: const InputDecoration(labelText: 'Nome do contato'),
+          style: TextStyle(color: widget.palette.textPrimary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, controller.text),
+            child: const Text('Salvar'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (name == null || name.trim().isEmpty) return;
+    try {
+      await widget.onRenameContact(name.trim());
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Não foi possível renomear: $error')),
+        );
+      }
+    }
+  }
+
+  Future<void> _confirmDeleteConversation() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: widget.palette.modal,
+        title: Text(
+          'Apagar conversa?',
+          style: TextStyle(color: widget.palette.textPrimary),
+        ),
+        content: Text(
+          'O histórico de mensagens com este contato será removido.',
+          style: TextStyle(color: widget.palette.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Apagar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await widget.onDeleteConversation();
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Não foi possível apagar: $error')),
+        );
+      }
+    }
   }
 
   @override
@@ -144,18 +232,6 @@ class _ChatDetailViewState extends State<ChatDetailView> {
                   ),
                 ),
               ),
-              IconButton(
-                constraints: const BoxConstraints(),
-                padding: const EdgeInsets.all(6),
-                tooltip: 'Chamada de voz',
-                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Chamadas ainda não conectadas ao serviço.'),
-                  ),
-                ),
-                icon: Icon(Icons.call_outlined, color: widget.primary, size: 19),
-              ),
-              const SizedBox(width: 4),
               PopupMenuButton<String>(
                 padding: EdgeInsets.zero,
                 icon: Icon(
@@ -165,13 +241,9 @@ class _ChatDetailViewState extends State<ChatDetailView> {
                 ),
                 onSelected: (value) {
                   if (value == 'delete') {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'A exclusão da conversa requer o serviço Pigeon.',
-                        ),
-                      ),
-                    );
+                    _confirmDeleteConversation();
+                  } else if (value == 'rename') {
+                    _renameContact();
                   }
                 },
                 itemBuilder: (_) => const [
@@ -261,7 +333,7 @@ class _ChatDetailViewState extends State<ChatDetailView> {
                 shape: const CircleBorder(),
                 child: InkWell(
                   customBorder: const CircleBorder(),
-                  onTap: _sendMessage,
+                  onTap: _sending ? null : _sendMessage,
                   child: const Padding(
                     padding: EdgeInsets.all(8),
                     child: Icon(Icons.send, color: Colors.white, size: 16),

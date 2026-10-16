@@ -12,6 +12,11 @@ class FeedTab extends StatefulWidget {
     required this.primary,
     required this.palette,
     required this.onCreatePost,
+    required this.onLikePost,
+    required this.onContactAuthor,
+    required this.onEditPost,
+    required this.onDeletePost,
+    required this.onReportPost,
     super.key,
   });
 
@@ -19,7 +24,12 @@ class FeedTab extends StatefulWidget {
   final PigeonProfile currentUser;
   final Color primary;
   final EnxosPalette palette;
-  final ValueChanged<String> onCreatePost;
+  final Future<void> Function(String content) onCreatePost;
+  final Future<void> Function(PigeonFeedPost post) onLikePost;
+  final ValueChanged<PigeonProfile> onContactAuthor;
+  final Future<void> Function(PigeonFeedPost post, String content) onEditPost;
+  final Future<void> Function(PigeonFeedPost post) onDeletePost;
+  final Future<void> Function(PigeonFeedPost post, String reason) onReportPost;
 
   @override
   State<FeedTab> createState() => _FeedTabState();
@@ -61,14 +71,153 @@ class _FeedTabState extends State<FeedTab> {
       ),
     );
     controller.dispose();
-    if (content != null && content.isNotEmpty) widget.onCreatePost(content);
+    if (content != null && content.isNotEmpty) {
+      try {
+        await widget.onCreatePost(content);
+      } catch (error) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Não foi possível publicar: $error')),
+          );
+        }
+      }
+    }
   }
 
-  void _toggleLike(PigeonFeedPost post) {
-    setState(() {
-      post.isLiked = !post.isLiked;
-      post.likes += post.isLiked ? 1 : -1;
-    });
+  Future<void> _toggleLike(PigeonFeedPost post) async {
+    if (post.postId == null) return;
+    try {
+      await widget.onLikePost(post);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Não foi possível curtir: $error')),
+        );
+      }
+    }
+  }
+
+  Future<void> _editPost(PigeonFeedPost post) async {
+    final controller = TextEditingController(text: post.content);
+    final content = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: widget.palette.modal,
+        title: Text(
+          'Editar publicação',
+          style: TextStyle(color: widget.palette.textPrimary),
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLines: 4,
+          maxLength: 1000,
+          decoration: const InputDecoration(alignLabelWithHint: true),
+          style: TextStyle(color: widget.palette.textPrimary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, controller.text),
+            child: const Text('Salvar'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (content == null || content.trim().isEmpty) return;
+    await _runPostAction(
+      'Não foi possível editar a publicação',
+      () => widget.onEditPost(post, content.trim()),
+    );
+  }
+
+  Future<void> _deletePost(PigeonFeedPost post) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: widget.palette.modal,
+        title: Text(
+          'Apagar publicação?',
+          style: TextStyle(color: widget.palette.textPrimary),
+        ),
+        content: Text(
+          'A publicação será removida do feed.',
+          style: TextStyle(color: widget.palette.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Apagar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await _runPostAction(
+      'Não foi possível apagar a publicação',
+      () => widget.onDeletePost(post),
+    );
+  }
+
+  Future<void> _reportPost(PigeonFeedPost post) async {
+    final controller = TextEditingController();
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: widget.palette.modal,
+        title: Text(
+          'Denunciar publicação',
+          style: TextStyle(color: widget.palette.textPrimary),
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLines: 3,
+          maxLength: 300,
+          decoration: const InputDecoration(labelText: 'Motivo'),
+          style: TextStyle(color: widget.palette.textPrimary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, controller.text),
+            child: const Text('Enviar denúncia'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (reason == null || reason.trim().isEmpty) return;
+    await _runPostAction(
+      'Não foi possível denunciar a publicação',
+      () => widget.onReportPost(post, reason.trim()),
+    );
+  }
+
+  Future<void> _runPostAction(
+    String errorPrefix,
+    Future<void> Function() action,
+  ) async {
+    try {
+      await action();
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$errorPrefix: $error')));
+      }
+    }
   }
 
   @override
@@ -89,6 +238,11 @@ class _FeedTabState extends State<FeedTab> {
             primary: widget.primary,
             palette: widget.palette,
             onLike: () => _toggleLike(post),
+            onContactAuthor: () => widget.onContactAuthor(post.author),
+            isMine: post.author.id == widget.currentUser.id,
+            onEdit: () => _editPost(post),
+            onDelete: () => _deletePost(post),
+            onReport: () => _reportPost(post),
           ),
         if (widget.posts.isEmpty)
           Padding(
@@ -96,7 +250,10 @@ class _FeedTabState extends State<FeedTab> {
             child: Center(
               child: Text(
                 'Ainda não há publicações.',
-                style: TextStyle(color: widget.palette.textSecondary, fontSize: 13),
+                style: TextStyle(
+                  color: widget.palette.textSecondary,
+                  fontSize: 13,
+                ),
               ),
             ),
           ),
@@ -159,14 +316,6 @@ class _Composer extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 4),
-          IconButton(
-            constraints: const BoxConstraints(),
-            padding: const EdgeInsets.all(6),
-            onPressed: onTap,
-            tooltip: 'Criar publicação',
-            icon: Icon(Icons.image_outlined, color: primary, size: 20),
-          ),
         ],
       ),
     );
@@ -179,12 +328,22 @@ class _PostCard extends StatelessWidget {
     required this.primary,
     required this.palette,
     required this.onLike,
+    required this.onContactAuthor,
+    required this.isMine,
+    required this.onEdit,
+    required this.onDelete,
+    required this.onReport,
   });
 
   final PigeonFeedPost post;
   final Color primary;
   final EnxosPalette palette;
   final VoidCallback onLike;
+  final VoidCallback onContactAuthor;
+  final bool isMine;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+  final VoidCallback onReport;
 
   @override
   Widget build(BuildContext context) {
@@ -240,7 +399,37 @@ class _PostCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(Icons.more_horiz, color: palette.textMuted, size: 18),
+              PopupMenuButton<String>(
+                icon: Icon(
+                  Icons.more_horiz,
+                  color: palette.textMuted,
+                  size: 18,
+                ),
+                onSelected: (action) {
+                  switch (action) {
+                    case 'edit':
+                      onEdit();
+                      break;
+                    case 'delete':
+                      onDelete();
+                      break;
+                    case 'report':
+                      onReport();
+                      break;
+                  }
+                },
+                itemBuilder: (_) => isMine
+                    ? const [
+                        PopupMenuItem(value: 'edit', child: Text('Editar')),
+                        PopupMenuItem(value: 'delete', child: Text('Apagar')),
+                      ]
+                    : const [
+                        PopupMenuItem(
+                          value: 'report',
+                          child: Text('Denunciar'),
+                        ),
+                      ],
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -302,13 +491,7 @@ class _PostCard extends StatelessWidget {
               Container(width: 1, height: 16, color: palette.border),
               Expanded(
                 child: InkWell(
-                  onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Comentários do feed ainda não conectados.',
-                      ),
-                    ),
-                  ),
+                  onTap: onContactAuthor,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 6),
                     child: Row(
@@ -321,7 +504,7 @@ class _PostCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${post.comments}',
+                          'Conversar',
                           style: TextStyle(
                             color: palette.textSecondary,
                             fontSize: 11.5,

@@ -58,7 +58,9 @@ class PigeonContactProfileSheet extends StatelessWidget {
             const SizedBox(height: 14),
             _InfoCard(
               label: 'Visto por último',
-              value: profile.isOnline ? 'Online' : 'Status indisponível',
+              value: profile.isOnline
+                  ? 'Online'
+                  : (profile.lastSeen ?? 'Status indisponível'),
               palette: palette,
             ),
             const SizedBox(height: 8),

@@ -9,6 +9,7 @@ class PigeonProfile {
     this.verification = PigeonVerification.none,
     this.avatarUrl,
     this.isBlocked = false,
+    this.lastSeen,
   });
 
   final String name;
@@ -18,6 +19,7 @@ class PigeonProfile {
   final PigeonVerification verification;
   final String? avatarUrl;
   final bool isBlocked;
+  final String? lastSeen;
 
   String get initial {
     final value = name.trim();
@@ -30,11 +32,15 @@ class PigeonChatMessage {
     required this.body,
     required this.isMine,
     required this.timeLabel,
+    this.id,
+    this.isRead = false,
   });
 
+  final String? id;
   final String body;
   final bool isMine;
   final String timeLabel;
+  final bool isRead;
 }
 
 class PigeonConversation {
@@ -43,6 +49,8 @@ class PigeonConversation {
     required this.lastMessage,
     required this.timeLabel,
     this.unreadCount = 0,
+    this.latestMessageId,
+    this.latestMessageIsMine = false,
     List<PigeonChatMessage>? messages,
   }) : messages = messages ?? <PigeonChatMessage>[];
 
@@ -50,6 +58,8 @@ class PigeonConversation {
   String lastMessage;
   String timeLabel;
   int unreadCount;
+  String? latestMessageId;
+  bool latestMessageIsMine;
   final List<PigeonChatMessage> messages;
 }
 
@@ -60,10 +70,12 @@ class PigeonFeedPost {
     required this.content,
     required this.likes,
     required this.comments,
+    this.postId,
     this.imageUrl,
     this.isLiked = false,
   });
 
+  final int? postId;
   final PigeonProfile author;
   final String timeLabel;
   final String content;
@@ -71,4 +83,11 @@ class PigeonFeedPost {
   final String? imageUrl;
   int likes;
   bool isLiked;
+}
+
+class PigeonBeep {
+  const PigeonBeep({required this.id, required this.fileUrl});
+
+  final int id;
+  final String fileUrl;
 }

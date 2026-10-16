@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 
 import '../../../core/enxos/enxos_theme.dart';
 import '../models/pigeon_models.dart';
+import '../services/pigeon_audio_platform.dart';
 import '../widgets/pigeon_avatar.dart';
 import '../widgets/verified_badge.dart';
 
@@ -12,12 +14,23 @@ class PttTab extends StatefulWidget {
     required this.contacts,
     required this.primary,
     required this.palette,
+    required this.active,
+    required this.onSendAudio,
+    required this.onGetNextBeep,
+    required this.onPlayBeep,
+    required this.onDeleteBeep,
     super.key,
   });
 
   final List<PigeonProfile> contacts;
   final Color primary;
   final EnxosPalette palette;
+  final bool active;
+  final Future<void> Function(PigeonProfile contact, String filePath)
+  onSendAudio;
+  final Future<PigeonBeep?> Function() onGetNextBeep;
+  final Future<void> Function(String url) onPlayBeep;
+  final Future<void> Function(int beepId) onDeleteBeep;
 
   @override
   State<PttTab> createState() => _PttTabState();
@@ -27,13 +40,48 @@ class _PttTabState extends State<PttTab> {
   static const _maximumTalkDuration = Duration(seconds: 10);
   PigeonProfile? _selectedContact;
   Timer? _talkLimit;
+  Timer? _beepPolling;
   bool _isTransmitting = false;
+  bool _recording = false;
+  bool _startingRecording = false;
+  bool _stopAfterStart = false;
+  bool _pollingBeep = false;
   String _status = 'Selecione um contato e segure para falar';
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.active) _startPolling();
+  }
+
+  @override
+  void didUpdateWidget(covariant PttTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.active && widget.active) {
+      _startPolling();
+    } else if (oldWidget.active && !widget.active) {
+      _stopPolling();
+    }
+  }
 
   @override
   void dispose() {
     _talkLimit?.cancel();
+    _stopPolling();
+    if (_recording) {
+      unawaited(_discardActiveRecording());
+    }
+    unawaited(PigeonAudioPlatform.stopPlayback());
     super.dispose();
+  }
+
+  Future<void> _discardActiveRecording() async {
+    try {
+      final path = await PigeonAudioPlatform.stopRecording();
+      await File(path).delete();
+    } catch (_) {
+      // A tela pode ser removida no meio de uma gravação curta.
+    }
   }
 
   void _selectContact(PigeonProfile contact) {
@@ -43,26 +91,109 @@ class _PttTabState extends State<PttTab> {
     });
   }
 
-  void _startTalking() {
+  Future<void> _startTalking() async {
     if (_selectedContact == null) {
       setState(() => _status = 'Selecione um contato da lista primeiro.');
       return;
     }
+    if (_isTransmitting || _startingRecording) return;
     _talkLimit?.cancel();
     setState(() {
       _isTransmitting = true;
-      _status = 'PTT pressionado para ${_selectedContact!.name}';
+      _startingRecording = true;
+      _stopAfterStart = false;
+      _status = 'Solicitando acesso ao microfone...';
     });
-    _talkLimit = Timer(_maximumTalkDuration, _stopTalking);
+    try {
+      await PigeonAudioPlatform.startRecording();
+      _startingRecording = false;
+      _recording = true;
+      if (!mounted) {
+        await PigeonAudioPlatform.stopRecording();
+        return;
+      }
+      if (_stopAfterStart || !_isTransmitting) {
+        await _finishRecording();
+        return;
+      }
+      setState(
+        () => _status = 'Transmitindo para ${_selectedContact!.name}...',
+      );
+      _talkLimit = Timer(_maximumTalkDuration, _stopTalking);
+    } catch (error) {
+      _startingRecording = false;
+      if (!mounted) return;
+      setState(() {
+        _isTransmitting = false;
+        _status = error.toString().contains('microphone_permission_denied')
+            ? 'Permita o acesso ao microfone para falar.'
+            : 'Não foi possível iniciar o PTT.';
+      });
+    }
   }
 
-  void _stopTalking() {
+  Future<void> _stopTalking() async {
     _talkLimit?.cancel();
-    if (!mounted || !_isTransmitting) return;
-    setState(() {
-      _isTransmitting = false;
-      _status = 'Pronto. Segure para falar (máx. 10s)';
-    });
+    if (!_isTransmitting && !_startingRecording && !_recording) return;
+    if (mounted) setState(() => _isTransmitting = false);
+    if (_startingRecording) {
+      _stopAfterStart = true;
+      return;
+    }
+    await _finishRecording();
+  }
+
+  Future<void> _finishRecording() async {
+    final contact = _selectedContact;
+    if (!_recording || contact == null) return;
+    _recording = false;
+    if (mounted) setState(() => _status = 'Enviando áudio...');
+    try {
+      final path = await PigeonAudioPlatform.stopRecording();
+      await widget.onSendAudio(contact, path);
+      await File(path).delete().catchError((_) => File(path));
+      if (mounted) {
+        setState(() => _status = 'PTT enviado. Segure para falar novamente.');
+      }
+    } catch (error) {
+      if (mounted) {
+        setState(() => _status = 'Falha ao enviar o áudio: $error');
+      }
+    } finally {
+      if (mounted) setState(() => _isTransmitting = false);
+    }
+  }
+
+  void _startPolling() {
+    _beepPolling?.cancel();
+    _beepPolling = Timer.periodic(
+      const Duration(seconds: 3),
+      (_) => _pollReceivedAudio(),
+    );
+    _pollReceivedAudio();
+  }
+
+  void _stopPolling() {
+    _beepPolling?.cancel();
+    _beepPolling = null;
+  }
+
+  Future<void> _pollReceivedAudio() async {
+    if (!widget.active || _pollingBeep || _isTransmitting || !mounted) return;
+    _pollingBeep = true;
+    try {
+      final beep = await widget.onGetNextBeep();
+      if (beep == null || !mounted) return;
+      setState(() => _status = 'Reproduzindo áudio recebido...');
+      await widget.onPlayBeep(beep.fileUrl);
+      await widget.onDeleteBeep(beep.id);
+      if (mounted) setState(() => _status = 'Áudio recebido reproduzido.');
+    } catch (_) {
+      if (mounted)
+        setState(() => _status = 'Não foi possível reproduzir o PTT.');
+    } finally {
+      _pollingBeep = false;
+    }
   }
 
   @override
@@ -210,7 +341,9 @@ class _PttTabState extends State<PttTab> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Áudio e envio dependem da conexão com o serviço Pigeon.',
+                widget.active
+                    ? 'Áudios recebidos são verificados automaticamente.'
+                    : 'Abra a aba PTT para receber áudios.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: widget.palette.textMuted, fontSize: 10),
               ),

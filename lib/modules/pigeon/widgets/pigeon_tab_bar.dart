@@ -39,18 +39,9 @@ class PigeonTabBar extends StatelessWidget {
             height: 36, // Reduz a altura vertical interna da aba
             text: 'Mensagens',
           ),
-          Tab(
-            height: 36,
-            text: 'Contatos',
-          ),
-          Tab(
-            height: 36,
-            text: 'Feed',
-          ),
-          Tab(
-            height: 36,
-            text: 'PTT',
-          ),
+          Tab(height: 36, text: 'Contatos'),
+          Tab(height: 36, text: 'Feed'),
+          Tab(height: 36, text: 'PTT'),
         ],
       ),
     );
