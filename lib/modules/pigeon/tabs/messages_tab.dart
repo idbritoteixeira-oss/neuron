@@ -50,6 +50,7 @@ class MessagesTab extends StatelessWidget {
               primary: primary,
               palette: palette,
               radius: 23,
+              showOnline: true,
             ),
           ),
           title: Row(
