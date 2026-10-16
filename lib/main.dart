@@ -28,7 +28,7 @@ Future<void> main() async {
           create: (_) => AuthState(NetworkEnxosAuthRepository()),
         ),
         ChangeNotifierProvider(
-          create: (_) => ModuleState(DemoModuleAuthRepository()),
+          create: (_) => ModuleState(NetworkModuleAuthRepository()),
         ),
       ],
       child: const EnxosApp(),

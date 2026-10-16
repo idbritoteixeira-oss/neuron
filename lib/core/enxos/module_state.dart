@@ -1,82 +1,57 @@
-import 'package:flutter/foundation.dart';
-
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'enx_module.dart';
+import 'auth_repository.dart'; // Se precisar alinhar estruturas, ou crie a sua interface dedicada
 
 abstract interface class ModuleAuthRepository {
   Future<bool> authenticate({
     required EnxModule module,
     required String moduleId,
-    required String privateId,
+    required String privateId, // Corresponde ao PIN no contexto do Pigeon
   });
 }
 
-/// Validação somente para demonstração offline; não confirma a identidade.
-class DemoModuleAuthRepository implements ModuleAuthRepository {
+class NetworkModuleAuthRepository implements ModuleAuthRepository {
+  // Endpoint real do backend do Pigeon que você compartilhou
+  static const String _pigeonLoginUrl = 'https://tts.enxos.online/f/p1319.php';
+
   @override
   Future<bool> authenticate({
     required EnxModule module,
     required String moduleId,
     required String privateId,
   }) async {
-    return moduleId.trim() == module.id && privateId.isNotEmpty;
-  }
-}
+    // Por enquanto focamos estritamente no Pigeon conforme alinhado
+    if (module != EnxModule.pigeon) {
+      return false; // Outros módulos serão implementados futuramente
+    }
 
-/// Mantém as sessões dos módulos separadas da sessão global do enxOS.
-class ModuleState extends ChangeNotifier {
-  ModuleState(this._repository);
+    final cleanId = moduleId.trim();
+    final cleanPin = privateId.trim();
 
-  final ModuleAuthRepository _repository;
-  final Set<EnxModule> _unlockedModules = {};
-  String? _error;
-
-  String? get error => _error;
-  int get unlockedCount => _unlockedModules.length;
-
-  bool isUnlocked(EnxModule module) => _unlockedModules.contains(module);
-
-  Future<bool> unlock({
-    required EnxModule module,
-    required String moduleId,
-    required String privateId,
-  }) async {
-    _error = null;
-    if (moduleId.trim().isEmpty || privateId.isEmpty) {
-      _error = 'Informe o ID e o ID privado do módulo.';
-      notifyListeners();
+    if (cleanId.isEmpty || cleanPin.isEmpty) {
       return false;
     }
 
     try {
-      final authenticated = await _repository.authenticate(
-        module: module,
-        moduleId: moduleId.trim(),
-        privateId: privateId,
+      final response = await http.post(
+        Uri.parse(_pigeonLoginUrl),
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: {
+          'action': 'login',
+          'pigeon_id': cleanId, // Mapeia exatamente para o $_POST['pigeon_id'] / $_POST['id_pru'] do PHP
+          'pin': cleanPin,       // Mapeia para o $_POST['pin']
+        },
       );
-      if (!authenticated) {
-        _error = 'As credenciais de ${module.title} não foram validadas.';
-        notifyListeners();
-        return false;
-      }
 
-      _unlockedModules.add(module);
-      notifyListeners();
-      return true;
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final success = data['success'] ?? false;
+        return success;
+      }
+      return false;
     } catch (_) {
-      _error = 'Não foi possível validar o acesso ao módulo.';
-      notifyListeners();
       return false;
     }
-  }
-
-  void lock(EnxModule module) {
-    _unlockedModules.remove(module);
-    notifyListeners();
-  }
-
-  void clear() {
-    _unlockedModules.clear();
-    _error = null;
-    notifyListeners();
   }
 }

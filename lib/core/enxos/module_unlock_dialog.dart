@@ -57,14 +57,29 @@ class _ModuleUnlockDialogState extends State<ModuleUnlockDialog>
     setState(() => _digits.removeLast());
   }
 
-  Future<void> _validate() async {
+    Future<void> _validate() async {
     setState(() => _loading = true);
     await Future.delayed(const Duration(milliseconds: 120));
 
     final pin = _digits.join();
+    
+    // Pega os IDs da nação salvos no AuthState após o login master do Dwellers
+    final authState = context.read<AuthState>();
+    final subModules = authState.subModules;
+
+    // Define dinamicamente o ID correto do módulo baseado no tipo
+    String moduleIdToUse = widget.module.id;
+    if (widget.module == EnxModule.pigeon && subModules != null) {
+      moduleIdToUse = subModules['id_pru'] ?? widget.module.id;
+    } else if (widget.module == EnxModule.inasx && subModules != null) {
+      moduleIdToUse = subModules['id_inx'] ?? widget.module.id;
+    } else if (widget.module == EnxModule.freemarket && subModules != null) {
+      moduleIdToUse = subModules['id_free'] ?? widget.module.id;
+    }
+
     final unlocked = await context.read<ModuleState>().unlock(
       module: widget.module,
-      moduleId: widget.module.id,
+      moduleId: moduleIdToUse, // <-- Agora usa o ID real buscado na enx_nation
       privateId: pin,
     );
 
