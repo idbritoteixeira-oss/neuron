@@ -215,7 +215,7 @@ class _FeedTabState extends State<FeedTab> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('$errorPrefix: $error')));
+        ).showSnackBar(SnackBar(content: Text('$errorPrefix:$error')));
       }
     }
   }
@@ -277,7 +277,7 @@ class _Composer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = post.imageUrl;
+    // Removida a referência inválida a `post.imageUrl` que causava erro no _Composer
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
@@ -348,6 +348,7 @@ class _PostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final imageUrl = post.imageUrl; // Corrigido para acessar a propriedade a partir do objeto `post`
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
