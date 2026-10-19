@@ -17,9 +17,6 @@ class EnxosTaskHandler extends TaskHandler {
 
   @override
   Future<void> onRepeatEvent(DateTime timestamp) async {
-    // Aqui você pode inserir a lógica em background para verificar novos beeps do PTT
-    // Exemplo: consultar a API se houver uma instância global ou callback configurado.
-    
     FlutterForegroundTask.updateService(
       notificationTitle: 'enxOS ativo',
       notificationText: 'Sincronização PTT • ${_formatTime(timestamp)}',
@@ -31,9 +28,9 @@ class EnxosTaskHandler extends TaskHandler {
 
   @override
   void onReceiveData(Object data) {
-    // Permite enviar dados do app principal para o serviço em execução (ex: disparar PTT)
+    // Tratamento de dados recebidos em segundo plano com uso correto de debugPrint
     if (data is Map && data['action'] == 'play_ptt') {
-      debugInfo('Executando PTT via Foreground Service em segundo plano.');
+      debugPrint('Executando PTT via Foreground Service em segundo plano.');
     }
   }
 
@@ -62,10 +59,10 @@ class ForegroundServiceController {
         playSound: false,
       ),
       foregroundTaskOptions: ForegroundTaskOptions(
-        eventAction: ForegroundTaskEventAction.repeat(30000), // Intervalo ajustado para checagem
+        eventAction: ForegroundTaskEventAction.repeat(30000),
         autoRunOnBoot: false,
         autoRunOnMyPackageReplaced: false,
-        allowWakeLock: true, // Mantém a CPU acordada para processar áudio/PTT se necessário
+        allowWakeLock: true,
         allowWifiLock: true,
       ),
     );
@@ -105,7 +102,6 @@ class ForegroundServiceController {
     }
   }
 
-  /// Método auxiliar para enviar comandos de PTT diretamente para o serviço rodando em background
   static void sendCommandToService(Map<String, dynamic> data) {
     if (isSupported) {
       FlutterForegroundTask.sendDataToTask(data);
