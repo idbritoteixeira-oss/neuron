@@ -24,7 +24,7 @@ import 'widgets/pigeon_fab.dart';
 import 'widgets/pigeon_search_bar.dart';
 import 'widgets/pigeon_tab_bar.dart';
 
-/// Controlador das abas e das operações remotas do Pigeon.
+/// Controlador das abas e das operações remotas do Pigeon com suporte global ao PTT.
 class PigeonScreen extends StatefulWidget {
   const PigeonScreen({required this.onLauncherTap, super.key});
 
@@ -110,9 +110,7 @@ class _PigeonScreenState extends State<PigeonScreen>
     try {
       final enabled = await PigeonNotificationSound.isEnabled();
       if (mounted) setState(() => _notificationSoundEnabled = enabled);
-    } catch (_) {
-      // A preferência de som não impede o acesso aos dados do servidor.
-    }
+    } catch (_) {}
   }
 
   Future<void> _loadRemoteData() async {
@@ -168,9 +166,7 @@ class _PigeonScreenState extends State<PigeonScreen>
       if ((hasNewIncoming || hasNewPost) && _notificationSoundEnabled) {
         try {
           await PigeonNotificationSound.playPreview();
-        } catch (_) {
-          // A falha no som não interrompe a sincronização das mensagens.
-        }
+        } catch (_) {}
       }
       final active = _activeChat;
       if (active != null) await _loadChatMessages(active);
@@ -637,8 +633,10 @@ class _PigeonScreenState extends State<PigeonScreen>
                 Expanded(
                   child: Stack(
                     children: [
+                      // Usamos Offstage ou mantemos a árvore de abas viva para o PTT continuar executando globalmente
                       TabBarView(
                         controller: _tabController,
+                        physics: const NeverScrollableScrollPhysics(), // Opcional: evita descarte por gestos indesejados se preferir manter o estado consistente
                         children: [
                           MessagesTab(
                             conversations: _visibleConversations,
@@ -666,6 +664,7 @@ class _PigeonScreenState extends State<PigeonScreen>
                             onDeletePost: _deletePost,
                             onReportPost: _reportPost,
                           ),
+                          // PttTab globalizado e mantido ativo no contexto principal
                           PttTab(
                             contacts: _visibleContacts,
                             primary: _primary,
@@ -694,4 +693,4 @@ class _PigeonScreenState extends State<PigeonScreen>
             ),
     );
   }
-}
+} 

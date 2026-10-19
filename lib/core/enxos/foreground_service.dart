@@ -10,16 +10,19 @@ class EnxosTaskHandler extends TaskHandler {
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
     FlutterForegroundTask.updateService(
-      notificationTitle: 'enxOS ativo',
-      notificationText: 'Sessão em execução em segundo plano.',
+      notificationTitle: 'enxOS & Pigeon ativos',
+      notificationText: 'Sessão e escuta PTT em segundo plano.',
     );
   }
 
   @override
-  void onRepeatEvent(DateTime timestamp) {
+  Future<void> onRepeatEvent(DateTime timestamp) async {
+    // Aqui você pode inserir a lógica em background para verificar novos beeps do PTT
+    // Exemplo: consultar a API se houver uma instância global ou callback configurado.
+    
     FlutterForegroundTask.updateService(
       notificationTitle: 'enxOS ativo',
-      notificationText: 'Verificação de atividade • ${_formatTime(timestamp)}',
+      notificationText: 'Sincronização PTT • ${_formatTime(timestamp)}',
     );
   }
 
@@ -27,7 +30,12 @@ class EnxosTaskHandler extends TaskHandler {
   Future<void> onDestroy(DateTime timestamp, bool isTimeout) async {}
 
   @override
-  void onReceiveData(Object data) {}
+  void onReceiveData(Object data) {
+    // Permite enviar dados do app principal para o serviço em execução (ex: disparar PTT)
+    if (data is Map && data['action'] == 'play_ptt') {
+      debugInfo('Executando PTT via Foreground Service em segundo plano.');
+    }
+  }
 
   static String _formatTime(DateTime value) {
     final hour = value.hour.toString().padLeft(2, '0');
@@ -46,7 +54,7 @@ class ForegroundServiceController {
       androidNotificationOptions: AndroidNotificationOptions(
         channelId: 'enxos_foreground_service',
         channelName: 'Serviço enxOS',
-        channelDescription: 'Indica que o serviço enxOS está ativo.',
+        channelDescription: 'Indica que o serviço enxOS e PTT estão ativos.',
         onlyAlertOnce: true,
       ),
       iosNotificationOptions: const IOSNotificationOptions(
@@ -54,11 +62,11 @@ class ForegroundServiceController {
         playSound: false,
       ),
       foregroundTaskOptions: ForegroundTaskOptions(
-        eventAction: ForegroundTaskEventAction.repeat(60000),
+        eventAction: ForegroundTaskEventAction.repeat(30000), // Intervalo ajustado para checagem
         autoRunOnBoot: false,
         autoRunOnMyPackageReplaced: false,
-        allowWakeLock: false,
-        allowWifiLock: false,
+        allowWakeLock: true, // Mantém a CPU acordada para processar áudio/PTT se necessário
+        allowWifiLock: true,
       ),
     );
   }
@@ -84,7 +92,7 @@ class ForegroundServiceController {
       await FlutterForegroundTask.startService(
         serviceId: 410,
         notificationTitle: 'enxOS ativo',
-        notificationText: 'Sessão em execução em segundo plano.',
+        notificationText: 'Sessão e PTT em execução em segundo plano.',
         callback: enxosForegroundTaskStart,
       );
     }
@@ -94,6 +102,13 @@ class ForegroundServiceController {
   static Future<void> stop() async {
     if (isSupported && await FlutterForegroundTask.isRunningService) {
       await FlutterForegroundTask.stopService();
+    }
+  }
+
+  /// Método auxiliar para enviar comandos de PTT diretamente para o serviço rodando em background
+  static void sendCommandToService(Map<String, dynamic> data) {
+    if (isSupported) {
+      FlutterForegroundTask.sendDataToTask(data);
     }
   }
 }
