@@ -11,7 +11,7 @@ abstract final class PigeonAudioPlatform {
   static Future<String> stopRecording() async {
     final path = await _channel.invokeMethod<String>('stopRecording');
     if (path == null || path.isEmpty) {
-      throw PlatformException(
+      throw const PlatformException(
         code: 'empty_recording',
         message: 'A gravação não foi criada.',
       );
