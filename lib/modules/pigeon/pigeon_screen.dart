@@ -670,7 +670,7 @@ class _PigeonScreenState extends State<PigeonScreen>
                             contacts: _visibleContacts,
                             primary: _primary,
                             palette: palette,
-                            active: _tabIndex == 3,
+                            active: _hasLoadedData,
                             onSendAudio: _sendAudio,
                             onGetNextBeep: () => _requireApi().getNextBeep(),
                             onPlayBeep: PigeonAudioPlatform.play,
