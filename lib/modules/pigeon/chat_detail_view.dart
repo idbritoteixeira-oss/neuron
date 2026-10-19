@@ -169,8 +169,9 @@ class _ChatDetailViewState extends State<ChatDetailView> {
     final profile = widget.conversation.profile;
     return Column(
       children: [
+        // Cabeçalho ajustado com menor padding vertical para reduzir a altura
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
           decoration: BoxDecoration(
             color: widget.palette.card,
             border: Border(
@@ -181,7 +182,7 @@ class _ChatDetailViewState extends State<ChatDetailView> {
             children: [
               IconButton(
                 constraints: const BoxConstraints(),
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(4),
                 tooltip: 'Voltar',
                 onPressed: widget.onBack,
                 icon: Icon(Icons.arrow_back, color: widget.primary, size: 20),
@@ -193,7 +194,7 @@ class _ChatDetailViewState extends State<ChatDetailView> {
                   profile: profile,
                   primary: widget.primary,
                   palette: widget.palette,
-                  radius: 16,
+                  radius: 14,
                 ),
               ),
               const SizedBox(width: 8),
@@ -213,7 +214,7 @@ class _ChatDetailViewState extends State<ChatDetailView> {
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: widget.palette.textPrimary,
-                                fontSize: 13.5,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -225,7 +226,7 @@ class _ChatDetailViewState extends State<ChatDetailView> {
                         profile.isOnline ? 'Online' : profile.id,
                         style: TextStyle(
                           color: widget.palette.textSecondary,
-                          fontSize: 10.5,
+                          fontSize: 10,
                         ),
                       ),
                     ],
@@ -388,11 +389,12 @@ class _MessageBubble extends StatelessWidget {
             ),
           ],
         ),
+        // Utiliza Wrap ou Column com MainAxisSize.min para o balão ajustar rigorosamente ao texto
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Align(
-              alignment: Alignment.centerLeft,
+            Flexible(
               child: Text(
                 message.body,
                 style: TextStyle(
@@ -403,9 +405,22 @@ class _MessageBubble extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 2),
-            Text(
-              message.timeLabel,
-              style: TextStyle(color: palette.textSecondary, fontSize: 9),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  message.timeLabel,
+                  style: TextStyle(color: palette.textSecondary, fontSize: 9),
+                ),
+                if (isMine) ...[
+                  const SizedBox(width: 3),
+                  Icon(
+                    Icons.done_all,
+                    size: 12,
+                    color: message.isRead ? Colors.blue : palette.textSecondary,
+                  ),
+                ],
+              ],
             ),
           ],
         ),
