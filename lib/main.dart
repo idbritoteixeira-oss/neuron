@@ -16,14 +16,7 @@ Future<void> main() async {
     FlutterForegroundTask.initCommunicationPort();
   }
 
-  // Protege a restauração de estado para evitar travar o boot se o cache estiver corrompido
-  EnxosUiState? uiState;
-  try {
-    uiState = await EnxosUiState.restore();
-  } catch (_) {
-    uiState = EnxosUiState(); // Fallback para um estado limpo se falhar
-  }
-
+  final uiState = await EnxosUiState.restore();
   runApp(
     MultiProvider(
       providers: [
