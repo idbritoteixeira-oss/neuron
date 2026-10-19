@@ -85,6 +85,7 @@ class _PttTabState extends State<PttTab> {
   }
 
   void _selectContact(PigeonProfile contact) {
+    if (_isTransmitting || _startingRecording) return;
     setState(() {
       _selectedContact = contact;
       _status = 'Pronto. Segure para falar (máx. 10s)';
@@ -92,7 +93,8 @@ class _PttTabState extends State<PttTab> {
   }
 
   Future<void> _startTalking() async {
-    if (_selectedContact == null) {
+    final contact = _selectedContact;
+    if (contact == null) {
       setState(() => _status = 'Selecione um contato da lista primeiro.');
       return;
     }
@@ -116,9 +118,7 @@ class _PttTabState extends State<PttTab> {
         await _finishRecording();
         return;
       }
-      setState(
-        () => _status = 'Transmitindo para ${_selectedContact!.name}...',
-      );
+      setState(() => _status = 'Transmitindo para ${contact.name}...');
       _talkLimit = Timer(_maximumTalkDuration, _stopTalking);
     } catch (error) {
       _startingRecording = false;

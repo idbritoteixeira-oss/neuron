@@ -309,12 +309,21 @@ class PigeonApi {
     String action, {
     Map<String, String> query = const {},
   }) async {
-    if (_dtts == null) await _refreshToken();
+    var token = _dtts;
+    if (token == null || token.isEmpty) {
+      await _refreshToken();
+      token = _dtts;
+    }
+    if (token == null || token.isEmpty) {
+      throw const PigeonApiException(
+        'A sessão Pigeon não retornou um token válido.',
+      );
+    }
     return _apiUri.replace(
       queryParameters: {
         'action': action,
         'id_pru': _requireUserId(),
-        'dtts': _dtts!,
+        'dtts': token,
         ...query,
       },
     );
@@ -457,8 +466,16 @@ class PigeonApi {
   String? _assetUrl(String value) {
     if (value.isEmpty) return null;
     final uri = Uri.tryParse(value);
-    if (uri?.hasScheme ?? false) return value;
-    if (value.startsWith('//')) return 'https:$value';
+    if (uri != null && uri.hasScheme) {
+      return (uri.scheme == 'http' || uri.scheme == 'https') &&
+              uri.host.isNotEmpty
+          ? value
+          : null;
+    }
+    if (value.startsWith('//')) {
+      final absoluteUri = Uri.tryParse('https:$value');
+      return absoluteUri?.host.isNotEmpty == true ? 'https:$value' : null;
+    }
     return 'https://pigeon.enxos.online/${value.replaceFirst(RegExp(r'^/+'), '')}';
   }
 

@@ -92,15 +92,9 @@ class EnxosTheme {
       ? EnxosPalette.dark
       : EnxosPalette.light;
 
-  static final ThemeData light = _build(
-    EnxosPalette.light,
-    Brightness.light,
-  );
+  static final ThemeData light = _build(EnxosPalette.light, Brightness.light);
 
-  static final ThemeData dark = _build(
-    EnxosPalette.dark,
-    Brightness.dark,
-  );
+  static final ThemeData dark = _build(EnxosPalette.dark, Brightness.dark);
 
   static ThemeData _build(EnxosPalette palette, Brightness brightness) {
     final scheme = ColorScheme.fromSeed(
@@ -118,7 +112,7 @@ class EnxosTheme {
         bodyColor: palette.textBody,
         displayColor: palette.textPrimary,
       ),
-      scaffoldBackgroundColor: Colors.transparent,
+      scaffoldBackgroundColor: palette.page,
       canvasColor: palette.card,
       dividerColor: palette.border,
       popupMenuTheme: PopupMenuThemeData(

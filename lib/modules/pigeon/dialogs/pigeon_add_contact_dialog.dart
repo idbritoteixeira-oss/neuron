@@ -67,7 +67,7 @@ class _PigeonAddContactDialogState extends State<PigeonAddContactDialog> {
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                _error!,
+                _error ?? '',
                 style: const TextStyle(color: Colors.redAccent, fontSize: 12),
               ),
             ),

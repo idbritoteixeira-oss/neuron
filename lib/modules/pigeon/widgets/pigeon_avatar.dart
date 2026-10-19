@@ -26,13 +26,23 @@ class PigeonAvatar extends StatelessWidget {
     final fallbackColor = useVerificationFallback
         ? _verificationColor(profile.verification)
         : palette.borderAvatar;
+    final rawAvatarUrl = profile.avatarUrl;
+    final parsedAvatarUrl = rawAvatarUrl == null
+        ? null
+        : Uri.tryParse(rawAvatarUrl);
+    final avatarUrl =
+        parsedAvatarUrl != null &&
+            (parsedAvatarUrl.scheme == 'http' ||
+                parsedAvatarUrl.scheme == 'https') &&
+            parsedAvatarUrl.host.isNotEmpty
+        ? rawAvatarUrl
+        : null;
     final avatar = CircleAvatar(
       radius: radius,
       backgroundColor: fallbackColor,
-      backgroundImage: profile.avatarUrl == null
-          ? null
-          : NetworkImage(profile.avatarUrl!),
-      child: profile.avatarUrl == null
+      backgroundImage: avatarUrl == null ? null : NetworkImage(avatarUrl),
+      onBackgroundImageError: (_, __) {},
+      child: avatarUrl == null
           ? Text(
               profile.initial,
               style: TextStyle(

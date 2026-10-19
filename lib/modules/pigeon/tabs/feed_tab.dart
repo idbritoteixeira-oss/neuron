@@ -277,6 +277,7 @@ class _Composer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final imageUrl = post.imageUrl;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
@@ -441,12 +442,12 @@ class _PostCard extends StatelessWidget {
               height: 1.35,
             ),
           ),
-          if (post.imageUrl != null) ...[
+          if (imageUrl != null) ...[
             const SizedBox(height: 8),
             ClipRRect(
               borderRadius: BorderRadius.circular(6),
               child: Image.network(
-                post.imageUrl!,
+                imageUrl,
                 width: double.infinity,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => const SizedBox.shrink(),

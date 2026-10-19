@@ -248,7 +248,7 @@ class _PigeonProfileScreenState extends State<PigeonProfileScreen> {
             if (_error != null) ...[
               const SizedBox(height: 8),
               Text(
-                _error!,
+                _error ?? '',
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: Color(0xFFEF4444)),
               ),

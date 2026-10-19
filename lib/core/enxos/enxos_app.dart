@@ -21,7 +21,20 @@ class _EnxosAppState extends State<EnxosApp> {
   void initState() {
     super.initState();
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      ForegroundServiceController.initialize();
+      try {
+        ForegroundServiceController.initialize();
+      } catch (error, stackTrace) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: error,
+            stack: stackTrace,
+            library: 'enxOS serviço Android',
+            context: ErrorDescription(
+              'ao preparar o serviço em primeiro plano',
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -30,6 +43,7 @@ class _EnxosAppState extends State<EnxosApp> {
     final uiState = context.watch<EnxosUiState>();
     return MaterialApp(
       title: 'enxOS',
+      color: EnxosPalette.light.page,
       debugShowCheckedModeBanner: false,
       theme: EnxosTheme.light,
       darkTheme: EnxosTheme.dark,

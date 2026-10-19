@@ -413,7 +413,7 @@ class _PigeonScreenState extends State<PigeonScreen>
     );
     if (details == null) return;
     try {
-      await _api!.addContact(id: details.id, name: details.name);
+      await _requireApi().addContact(id: details.id, name: details.name);
       await _loadRemoteData();
       _showMessage('Contato adicionado.');
     } catch (error) {
@@ -511,6 +511,14 @@ class _PigeonScreenState extends State<PigeonScreen>
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
+  PigeonApi _requireApi() {
+    final api = _api;
+    if (api == null) {
+      throw const PigeonApiException('Sessão Pigeon não inicializada.');
+    }
+    return api;
+  }
+
   PigeonProfile _copyProfile(PigeonProfile profile, {String? name}) =>
       PigeonProfile(
         id: profile.id,
@@ -597,7 +605,7 @@ class _PigeonScreenState extends State<PigeonScreen>
             ),
           ),
       ],
-      child: !_hasLoadedData
+      child: !_hasLoadedData || currentUser == null
           ? _loadingOrError(palette)
           : activeChat != null
           ? ChatDetailView(
@@ -648,7 +656,7 @@ class _PigeonScreenState extends State<PigeonScreen>
                           ),
                           FeedTab(
                             posts: _visiblePosts,
-                            currentUser: currentUser!,
+                            currentUser: currentUser,
                             primary: _primary,
                             palette: palette,
                             onCreatePost: _createPost,
@@ -664,9 +672,9 @@ class _PigeonScreenState extends State<PigeonScreen>
                             palette: palette,
                             active: _tabIndex == 3,
                             onSendAudio: _sendAudio,
-                            onGetNextBeep: () => _api!.getNextBeep(),
+                            onGetNextBeep: () => _requireApi().getNextBeep(),
                             onPlayBeep: PigeonAudioPlatform.play,
-                            onDeleteBeep: (id) => _api!.deleteBeep(id),
+                            onDeleteBeep: (id) => _requireApi().deleteBeep(id),
                           ),
                         ],
                       ),

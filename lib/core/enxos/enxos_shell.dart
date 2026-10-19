@@ -162,8 +162,13 @@ class _HeaderState extends State<_Header> {
   }
 
   Future<void> _refreshServiceState() async {
-    final running = await ForegroundServiceController.isRunning;
-    if (mounted) setState(() => _serviceRunning = running);
+    try {
+      final running = await ForegroundServiceController.isRunning;
+      if (mounted) setState(() => _serviceRunning = running);
+    } catch (error) {
+      debugPrint('Não foi possível consultar o serviço Android: $error');
+      if (mounted) setState(() => _serviceRunning = false);
+    }
   }
 
   Future<void> _toggleService(bool enabled) async {
@@ -441,7 +446,7 @@ class _AppLauncherButton extends StatelessWidget {
               : Colors.transparent,
           borderRadius: BorderRadius.circular(14),
           child: InkWell(
-            onTap: enabled ? () => onSelect!(item.module) : null,
+            onTap: enabled ? () => onSelect?.call(item.module) : null,
             borderRadius: BorderRadius.circular(14),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),

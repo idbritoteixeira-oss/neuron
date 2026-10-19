@@ -27,7 +27,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    final formState = _formKey.currentState;
+    if (formState == null || !formState.validate()) return;
     final auth = context.read<AuthState>();
     final success = await auth.signIn(
       publicId: _publicIdController.text,
@@ -35,18 +36,22 @@ class _LoginScreenState extends State<LoginScreen> {
     );
     if (!mounted || success) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(auth.error ?? 'Não foi possível autenticar no núcleo.')),
+      SnackBar(
+        content: Text(auth.error ?? 'Não foi possível autenticar no núcleo.'),
+      ),
     );
   }
 
   // Simulação de gatilho para biometria / PIN rápido de sessão
   Future<void> _authenticateWithBiometrics() async {
     final auth = context.read<AuthState>();
-    
+
     // Aqui no futuro integras o local_auth para ler a impressão digital
     // e recuperar o token/credencial guardado de forma segura no SecureStorage.
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Autenticação biométrica ativada para sessões futuras.')),
+      const SnackBar(
+        content: Text('Autenticação biométrica ativada para sessões futuras.'),
+      ),
     );
   }
 
@@ -61,7 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthState>();
     final palette = EnxosTheme.paletteOf(context);
-    
+
     return EnxosShell(
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
@@ -114,7 +119,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       hintText: 'Sua senha',
                       prefixIcon: const Icon(Icons.key_outlined),
                       suffixIcon: IconButton(
-                        tooltip: _obscurePassword ? 'Mostrar senha' : 'Ocultar senha',
+                        tooltip: _obscurePassword
+                            ? 'Mostrar senha'
+                            : 'Ocultar senha',
                         onPressed: () => setState(
                           () => _obscurePassword = !_obscurePassword,
                         ),
@@ -152,7 +159,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: double.infinity,
                     height: 48,
                     child: OutlinedButton.icon(
-                      onPressed: auth.isLoading ? null : _authenticateWithBiometrics,
+                      onPressed: auth.isLoading
+                          ? null
+                          : _authenticateWithBiometrics,
                       icon: const Icon(Icons.fingerprint, size: 20),
                       label: const Text('Entrar com Biometria / PIN'),
                     ),
@@ -165,7 +174,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       Text(
                         'Ainda não tem uma identidade?',
-                        style: TextStyle(color: palette.textSecondary, fontSize: 13),
+                        style: TextStyle(
+                          color: palette.textSecondary,
+                          fontSize: 13,
+                        ),
                       ),
                       TextButton(
                         onPressed: _goToRegister,
